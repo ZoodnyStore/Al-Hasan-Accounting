@@ -49,6 +49,10 @@
         .stat-card { background-color: #111d33; padding: 20px; border-radius: 16px; border: 1px solid #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.3s ease; }
         .stat-card:hover { border-color: rgba(250, 204, 21, 0.3); transform: translateY(-2px); }
         .stat-card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 250px; }
+        #reader video { width: 100% !important; height: auto !important; border-radius: 12px; }
+        #reader__scan_region { min-height: 250px; }
+        #reader__dashboard { display: none !important; }
         @media print {
             body * { visibility: hidden; }
             #receiptModal, #receiptModal * { visibility: visible; }
@@ -489,9 +493,9 @@
     </div>
     <div id="scannerModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 backdrop-blur-sm">
         <div class="bg-navy-800 p-6 rounded-2xl w-full max-w-lg border border-gold-500 shadow-2xl">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gold-400">مسح الباركود</h3><button onclick="closeScanner()" class="text-slate-400 hover:text-white text-2xl">&times;</button></div>
-            <div id="reader" class="w-full rounded-xl overflow-hidden border-2 border-navy-700"></div>
-            <p class="text-center text-slate-400 text-sm mt-4">وجه الكاميرا نحو الباركود.</p>
+            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gold-400"><i class="fa-solid fa-barcode"></i> مسح الباركود</h3><button onclick="closeScanner()" class="text-slate-400 hover:text-white text-2xl">&times;</button></div>
+            <div id="reader" class="w-full rounded-xl overflow-hidden border-2 border-gold-500/40"></div>
+            <p class="text-center text-slate-400 text-sm mt-4"><i class="fa-solid fa-info-circle text-gold-400"></i> وجه الكاميرا نحو الباركود وسيتم التعرف عليه تلقائياً</p>
         </div>
     </div>
     <div id="payDebtModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 backdrop-blur-sm">
@@ -811,7 +815,6 @@
             
             if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
             
-            // 1. المدير الرئيسي
             if (username === state.subscription.username && password === state.subscription.password) {
                 sessionStorage.setItem('alhasan_logged_in', 'true');
                 sessionStorage.setItem('alhasan_user_type', 'admin');
@@ -823,7 +826,6 @@
                 return;
             }
             
-            // 2. العملاء
             const clients = Array.isArray(state.adminClients) ? state.adminClients : [];
             const client = clients.find(c => (c.username || 'admin') === username && (c.password || 'admin123') === password);
             
@@ -1295,7 +1297,6 @@
             try { updateSubscriptionUI(); } catch(e) {}
         }
 
-        // ⭐⭐⭐ الإصلاح: تم حذف الشرط الذي كان يمنع العميل من الوصول للإعدادات ⭐⭐⭐
         function switchPage(pageId, element) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1943,24 +1944,197 @@
                 } catch(e) {}
             }, 100);
         }
+
+        // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+        // ⭐⭐⭐ قارئ الباركود المُحسّن - نسخة جديدة تماماً لحل مشكلة التعليق ⭐⭐⭐
+        // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
         let html5QrCode = null;
-        function openScanner(targetInputId) {
-            if (typeof Html5Qrcode === 'undefined') { showToast('المكتبة غير محملة', 'warning'); return; }
+        let scannerActive = false;
+        let lastScannedText = '';
+        let lastScanTime = 0;
+        let scannerTargetInput = null;
+
+        async function openScanner(targetInputId) {
+            // التحقق من وجود المكتبة
+            if (typeof Html5Qrcode === 'undefined') {
+                showToast('⚠️ مكتبة قارئ الباركود لم يتم تحميلها', 'warning');
+                return;
+            }
+            
+            // منع تشغيل نسختين من الكاميرا في نفس الوقت
+            if (scannerActive) {
+                console.log('⚠️ القارئ يعمل بالفعل');
+                return;
+            }
+            
+            // حفظ الهدف وتصفير المتغيرات
+            scannerTargetInput = targetInputId;
+            lastScannedText = '';
+            lastScanTime = 0;
+            scannerActive = true;
+            
+            // فتح النافذة
             openModal('scannerModal');
-            setTimeout(() => {
-                try {
-                    html5QrCode = new Html5Qrcode("reader");
-                    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (decodedText) => {
-                        html5QrCode.stop().then(() => {
-                            closeScanner();
-                            if (targetInputId === 'posSearch') { const product = state.products.find(p => p.barcode === decodedText); if (product) addToCart(product.id); else showToast(`غير موجود`, 'warning'); }
-                            else { document.getElementById(targetInputId).value = decodedText; showToast('تم المسح', 'success'); }
-                        }).catch(() => {});
-                    }, () => {}).catch(() => { showToast('تعذر تشغيل الكاميرا', 'warning'); closeScanner(); });
-                } catch(e) { showToast('خطأ', 'warning'); closeScanner(); }
-            }, 300);
+            
+            // انتظار ظهور عنصر reader في DOM
+            await new Promise(resolve => setTimeout(resolve, 400));
+            
+            const readerEl = document.getElementById('reader');
+            if (!readerEl) {
+                scannerActive = false;
+                closeModal('scannerModal');
+                showToast('⚠️ لم يتم العثور على عنصر الكاميرا', 'warning');
+                return;
+            }
+            
+            // تنظيف أي محتوى سابق
+            readerEl.innerHTML = '';
+            
+            try {
+                // إنشاء نسخة جديدة من القارئ
+                html5QrCode = new Html5Qrcode("reader", { verbose: false });
+                
+                // إعدادات محسّنة للقراءة السريعة والدقيقة
+                const config = {
+                    fps: 30, // 30 إطار/ثانية للقراءة الأسرع
+                    // qrbox ديناميكي: يستخدم 80% من أصغر بُعد في نافذة الكاميرا
+                    qrbox: function(viewfinderWidth, viewfinderHeight) {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const boxSize = Math.floor(minEdge * 0.8);
+                        return {
+                            width: boxSize,
+                            height: Math.floor(boxSize * 0.7) // مستطيل أوسع قليلاً (مناسب للباركودات الخطية)
+                        };
+                    },
+                    // استخدام الكشف الأصلي للمتصفح إذا كان مدعوماً (أسرع بكثير)
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
+                };
+                
+                // بدء الكاميرا
+                await html5QrCode.start(
+                    { facingMode: "environment" }, // الكاميرا الخلفية
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                );
+                
+                console.log('✅ الكاميرا تعمل بنجاح');
+                
+            } catch (err) {
+                console.error('❌ خطأ تشغيل الكاميرا:', err);
+                let errorMsg = 'تعذر تشغيل الكاميرا';
+                const errStr = (err && err.message) ? err.message : String(err);
+                
+                if (errStr.includes('NotAllowedError') || errStr.includes('Permission') || errStr.includes('denied')) {
+                    errorMsg = 'يجب السماح للتطبيق بالوصول إلى الكاميرا من إعدادات المتصفح';
+                } else if (errStr.includes('NotFoundError') || errStr.includes('no camera')) {
+                    errorMsg = 'لم يتم العثور على كاميرا في هذا الجهاز';
+                } else if (errStr.includes('NotReadableError') || errStr.includes('in use')) {
+                    errorMsg = 'الكاميرا مستخدمة من تطبيق آخر';
+                } else if (errStr.includes('OverconstrainedError')) {
+                    errorMsg = 'مواصفات الكاميرا غير مدعومة';
+                }
+                
+                showToast('⚠️ ' + errorMsg, 'warning');
+                await closeScanner();
+            }
         }
-        function closeScanner() { if (html5QrCode) { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(() => {}); } closeModal('scannerModal'); }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (!scannerActive) return;
+            
+            const now = Date.now();
+            // تجاهل القراءات المكررة خلال 1.5 ثانية
+            if (decodedText === lastScannedText && (now - lastScanTime) < 1500) {
+                return;
+            }
+            lastScannedText = decodedText;
+            lastScanTime = now;
+            
+            console.log('✅ تم مسح الباركود:', decodedText);
+            
+            // حفظ القيم قبل إيقاف الكاميرا
+            const targetInput = scannerTargetInput;
+            scannerActive = false;
+            
+            // اهتزاز تأكيدي (إن كان مدعوماً)
+            if (navigator.vibrate) {
+                try { navigator.vibrate(80); } catch(e) {}
+            }
+            
+            // إيقاف الكاميرا وتنظيف الموارد (بدون انتظار لتفادي التعليق)
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    if (html5QrCode) {
+                        try { html5QrCode.clear(); } catch(e) {}
+                        html5QrCode = null;
+                    }
+                }).catch(err => {
+                    console.warn('خطأ إيقاف الكاميرا:', err);
+                    html5QrCode = null;
+                });
+            }
+            
+            // إغلاق نافذة الكاميرا فوراً
+            closeModal('scannerModal');
+            
+            // معالجة النتيجة
+            if (targetInput === 'posSearch') {
+                // البحث عن المنتج في المخزون بالباركود أو SKU
+                const product = state.products.find(p =>
+                    p.barcode === decodedText ||
+                    p.sku === decodedText
+                );
+                if (product) {
+                    addToCart(product.id);
+                    showToast(`✅ تم إضافة "${product.name}"`, 'success');
+                } else {
+                    showToast(`⚠️ لا يوجد منتج بالباركود: ${decodedText}`, 'warning');
+                }
+            } else if (targetInput) {
+                // ملء الحقل بالباركود
+                const inputEl = document.getElementById(targetInput);
+                if (inputEl) {
+                    inputEl.value = decodedText;
+                    // إطلاق حدث input للبحث التلقائي
+                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    showToast('✅ تم مسح الباركود بنجاح', 'success');
+                }
+            }
+            
+            scannerTargetInput = null;
+        }
+
+        function onScanFailure(error) {
+            // تجاهل الأخطاء العادية (لم يتم اكتشاف باركود في الإطار الحالي)
+            // لا نطبع أي شيء لتفادي امتلاء Console
+        }
+
+        async function closeScanner() {
+            scannerActive = false;
+            scannerTargetInput = null;
+            
+            if (html5QrCode) {
+                try {
+                    await html5QrCode.stop();
+                } catch(e) {
+                    console.warn('خطأ في إيقاف القارئ:', e);
+                }
+                try {
+                    html5QrCode.clear();
+                } catch(e) {
+                    console.warn('خطأ في تنظيف القارئ:', e);
+                }
+                html5QrCode = null;
+            }
+            
+            closeModal('scannerModal');
+        }
+        // ⭐⭐⭐ نهاية قارئ الباركود ⭐⭐⭐
+
         function exportData() {
             const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
             const a = document.createElement('a');
