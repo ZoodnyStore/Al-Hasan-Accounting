@@ -94,6 +94,12 @@
             #cartItems { max-height: 250px !important; }
             .toast-notification { min-width: auto !important; padding: 12px 16px !important; font-size: 12px !important; }
         }
+        /* Notifications dropdown */
+        #notificationsDropdown { display: none; }
+        #notificationsDropdown.open { display: flex; }
+        .notif-item { transition: all 0.2s; }
+        .notif-item:hover { background-color: rgba(30, 41, 59, 0.7); }
+        .notif-item.unread { background-color: rgba(30, 41, 59, 0.4); }
     </style>
 </head>
 <body>
@@ -217,9 +223,26 @@
                     </div>
                     <div class="text-sm text-slate-400 hidden lg:block" id="current-date"></div>
                     <div id="subscriptionBadge" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold"></div>
-                    <button class="text-slate-400 hover:text-gold-400 relative"><i class="fa-solid fa-bell text-xl"></i><span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span></button>
+                    <button onclick="toggleNotifications(event)" class="text-slate-400 hover:text-gold-400 relative transition-colors" id="notificationBell" aria-label="الإشعارات">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 items-center justify-center shadow-lg font-bold" style="font-size: 10px;">0</span>
+                    </button>
                 </div>
             </header>
+
+            <!-- ⭐ قائمة الإشعارات المنسدلة ⭐ -->
+            <div id="notificationsDropdown" class="fixed top-20 left-2 right-2 md:left-4 md:right-auto md:w-96 max-h-[70vh] bg-navy-800 border border-navy-700 rounded-2xl shadow-2xl z-[300] flex-col overflow-hidden">
+                <div class="flex items-center justify-between p-4 border-b border-navy-700 bg-navy-900/70">
+                    <h3 class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-bell text-gold-400"></i> الإشعارات</h3>
+                    <div class="flex gap-3 items-center">
+                        <button onclick="markAllNotificationsAsRead()" class="text-xs text-gold-400 hover:text-gold-300 transition-colors" title="تعليم الكل كمقروء"><i class="fa-solid fa-check-double"></i></button>
+                        <button onclick="clearAllNotifications()" class="text-xs text-red-400 hover:text-red-300 transition-colors" title="حذف الكل"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="toggleNotifications(event)" class="text-slate-400 hover:text-white transition-colors" title="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div id="notificationsList" class="flex-1 overflow-y-auto"></div>
+            </div>
+
             <div class="flex-1 overflow-y-auto p-6">
                 <div id="dashboard" class="page active">
                     <div class="flex justify-between items-start mb-6">
@@ -376,7 +399,6 @@
                 </div>
                 <div id="settings" class="page">
                     <div class="mb-8 flex items-center gap-4"><div><h2 class="text-3xl font-bold text-white mb-1">الإعدادات</h2><p class="text-slate-400 text-sm">إعدادات النظام</p></div></div>
-                    <!-- ⭐ كرت معلومات الاشتراك (بدون زر محرر الاشتراك) ⭐ -->
                     <div class="bg-gradient-to-r from-navy-800 to-navy-700 p-6 rounded-2xl border-2 border-gold-500/40 shadow-xl mb-6">
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-12 h-12 bg-gold-500 rounded-xl flex items-center justify-center text-navy-900 text-xl shadow-lg"><i class="fa-solid fa-crown"></i></div>
@@ -621,7 +643,6 @@
             if (!key) return 'unknown';
             return key.replace(/[.#$\[\]\/@]/g, '_');
         }
-        
         function safeJsonParse(str, fallback) {
             if (str === null || str === undefined) return fallback;
             if (typeof str === 'object') return str;
@@ -630,17 +651,14 @@
             if (trimmed.length === 0) return fallback;
             try { return JSON.parse(trimmed); } catch(e) { console.warn('⚠️ JSON.parse فشل:', e.message); return fallback; }
         }
-        
         function normalizeCloudData(cloudData) {
             if (cloudData === null || cloudData === undefined) return null;
             if (typeof cloudData === 'object') return cloudData;
             if (typeof cloudData === 'string') return safeJsonParse(cloudData, null);
             return null;
         }
-        
         function isMasterUser() { return sessionStorage.getItem('alhasan_master_logged_in') === 'true'; }
         function isClientUser() { return sessionStorage.getItem('alhasan_user_type') === 'client' && !!sessionStorage.getItem('alhasan_client_username'); }
-        
         function getActiveRef() {
             if (isMasterUser()) return db.ref('appData/mainState');
             if (isClientUser()) {
@@ -678,7 +696,8 @@
         const defaultState = {
             settings: { exchangeRate: 14500, oldExchangeRate: 1400000, wholesaleDiscount: 10, isWholesale: false, activePosCategory: 'all', storeName: "الحسن للمحاسبة", phone: "+963 11 000 0000", address: "سوريا - دمشق", taxRate: 0 },
             subscription: { startDate: new Date().toISOString().slice(0, 10), endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), username: 'admin', password: 'admin123', providerPhone: '+963 11 000 0000' },
-            adminClients: [], products: [], customers: [], expenses: [], invoices: [], cart: []
+            adminClients: [], products: [], customers: [], expenses: [], invoices: [], cart: [],
+            notifications: []
         };
         function getFreshDefault() { return JSON.parse(JSON.stringify(defaultState)); }
 
@@ -694,6 +713,7 @@
         requiredKeys.forEach(k => {
             if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) { state[k] = JSON.parse(JSON.stringify(defaultState[k])); }
         });
+        if (!Array.isArray(state.notifications)) state.notifications = [];
         if (!state.subscription || typeof state.subscription !== 'object') state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
         if (!state.settings || typeof state.settings !== 'object') state.settings = JSON.parse(JSON.stringify(defaultState.settings));
         if (!Array.isArray(state.adminClients)) state.adminClients = [];
@@ -712,11 +732,228 @@
         let currentPayDebtCustomerId = null;
         let editingClientId = null;
 
+        // ============================================================
+        // ⭐⭐⭐ نظام الإشعارات ⭐⭐⭐
+        // ============================================================
+        const NOTIFICATION_TYPES = {
+            welcome: { icon: 'fa-hand-sparkles', color: 'text-blue-400 bg-blue-500/20', title: 'مرحباً بك' },
+            subscription_renewed: { icon: 'fa-check-circle', color: 'text-emerald-400 bg-emerald-500/20', title: 'تجديد الاشتراك' },
+            subscription_expiring: { icon: 'fa-clock', color: 'text-orange-400 bg-orange-500/20', title: 'تنبيه الاشتراك' },
+            subscription_expired: { icon: 'fa-circle-exclamation', color: 'text-red-400 bg-red-500/20', title: 'انتهاء الاشتراك' },
+            low_stock: { icon: 'fa-triangle-exclamation', color: 'text-orange-400 bg-orange-500/20', title: 'مخزون منخفض' },
+            out_of_stock: { icon: 'fa-circle-xmark', color: 'text-red-400 bg-red-500/20', title: 'نفاذ المخزون' },
+            sale_completed: { icon: 'fa-cash-register', color: 'text-emerald-400 bg-emerald-500/20', title: 'بيع جديد' },
+            info: { icon: 'fa-info-circle', color: 'text-blue-400 bg-blue-500/20', title: 'معلومة' }
+        };
+
+        function addNotification(type, message, options = {}) {
+            if (!Array.isArray(state.notifications)) state.notifications = [];
+            
+            // منع التكرار بناءً على dedupeKey
+            if (options.dedupeKey) {
+                const exists = state.notifications.find(n => n.dedupeKey === options.dedupeKey);
+                if (exists) return;
+            }
+            
+            const notification = {
+                id: 'notif_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                type: type,
+                message: message,
+                date: new Date().toLocaleString('ar-EG'),
+                timestamp: Date.now(),
+                read: false,
+                dedupeKey: options.dedupeKey || null
+            };
+            
+            state.notifications.unshift(notification);
+            
+            // حد أقصى 100 إشعار
+            if (state.notifications.length > 100) {
+                state.notifications = state.notifications.slice(0, 100);
+            }
+            
+            // حفظ محلي وسحابي
+            try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+            saveStateToCloud();
+            
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            if (!Array.isArray(state.notifications)) state.notifications = [];
+            
+            const unreadCount = state.notifications.filter(n => !n.read).length;
+            const badge = document.getElementById('notifBadge');
+            
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+            }
+            
+            const listEl = document.getElementById('notificationsList');
+            if (!listEl) return;
+            
+            if (state.notifications.length === 0) {
+                listEl.innerHTML = `<div class="p-10 text-center text-slate-500">
+                    <i class="fa-solid fa-bell-slash text-5xl mb-3 opacity-30"></i>
+                    <p class="text-sm">لا توجد إشعارات حالياً</p>
+                    <p class="text-xs mt-1 opacity-60">ستظهر هنا التنبيهات المهمة</p>
+                </div>`;
+                return;
+            }
+            
+            listEl.innerHTML = state.notifications.map(n => {
+                const config = NOTIFICATION_TYPES[n.type] || NOTIFICATION_TYPES.info;
+                return `
+                    <div class="notif-item p-3 border-b border-navy-700 cursor-pointer ${!n.read ? 'unread' : ''}" onclick="markNotificationAsRead('${n.id}')">
+                        <div class="flex gap-3">
+                            <div class="w-9 h-9 rounded-xl ${config.color} flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid ${config.icon} text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <h4 class="font-bold text-white text-xs">${config.title}</h4>
+                                    ${!n.read ? '<span class="w-2 h-2 rounded-full bg-gold-400 flex-shrink-0 mt-1"></span>' : ''}
+                                </div>
+                                <p class="text-slate-300 text-xs leading-relaxed break-words">${n.message}</p>
+                                <p class="text-slate-500 text-[10px] mt-1"><i class="fa-regular fa-clock"></i> ${n.date}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleNotifications(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('notificationsDropdown');
+            if (!dropdown) return;
+            dropdown.classList.toggle('open');
+        }
+
+        function markNotificationAsRead(id) {
+            if (!Array.isArray(state.notifications)) return;
+            const notif = state.notifications.find(n => n.id === id);
+            if (notif && !notif.read) {
+                notif.read = true;
+                try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+                saveStateToCloud();
+                renderNotifications();
+            }
+        }
+
+        function markAllNotificationsAsRead() {
+            if (!Array.isArray(state.notifications)) return;
+            let changed = false;
+            state.notifications.forEach(n => { if (!n.read) { n.read = true; changed = true; } });
+            if (changed) {
+                try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+                saveStateToCloud();
+                renderNotifications();
+                showToast('✅ تم تعليم جميع الإشعارات كمقروءة', 'success');
+            }
+        }
+
+        function clearAllNotifications() {
+            if (!Array.isArray(state.notifications) || state.notifications.length === 0) return;
+            if (confirm('هل أنت متأكد من حذف جميع الإشعارات؟')) {
+                state.notifications = [];
+                try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+                saveStateToCloud();
+                renderNotifications();
+                showToast('🗑️ تم حذف جميع الإشعارات', 'delete');
+            }
+        }
+
+        // إغلاق قائمة الإشعارات عند الضغط خارجها
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notificationsDropdown');
+            const bell = document.getElementById('notificationBell');
+            if (!dropdown || !dropdown.classList.contains('open')) return;
+            if (dropdown.contains(e.target) || (bell && bell.contains(e.target))) return;
+            dropdown.classList.remove('open');
+        });
+
+        // ⭐ توليد الإشعارات التلقائية
+        function generateAutoNotifications() {
+            if (!Array.isArray(state.notifications)) state.notifications = [];
+            
+            const username = sessionStorage.getItem('alhasan_client_username') || 'admin';
+            const isAdmin = !isClientUser();
+            
+            // 1. إشعار ترحيبي عند الدخول لأول مرة (يُحفظ في localStorage لكل مستخدم)
+            const welcomeKey = 'alhasan_welcomed_' + username;
+            if (!localStorage.getItem(welcomeKey)) {
+                if (isAdmin) {
+                    addNotification('welcome', `أهلاً وسهلاً بك في تطبيق الحسن للمحاسبة! نحن سعداء بوجودك معنا.`, { dedupeKey: 'welcome_' + username });
+                } else {
+                    const storeName = state.settings.storeName || 'متجرك';
+                    addNotification('welcome', `أهلاً وسهلاً بك في تطبيق الحسن للمحاسبة! نتمنى لك تجربة ممتعة مع إدارة ${storeName}.`, { dedupeKey: 'welcome_' + username });
+                }
+                localStorage.setItem(welcomeKey, 'true');
+            }
+            
+            // 2. إشعارات الاشتراك
+            if (state.subscription && state.subscription.endDate) {
+                const daysLeft = getDaysRemaining();
+                const endDate = state.subscription.endDate;
+                
+                if (daysLeft <= 0) {
+                    addNotification('subscription_expired', `⚠️ انتهى اشتراكك بتاريخ ${endDate}. يرجى التواصل مع المزود على الرقم ${state.subscription.providerPhone || '-'} للتجديد.`, { dedupeKey: 'sub_expired_' + endDate });
+                } else if (daysLeft <= 3) {
+                    addNotification('subscription_expiring', `🚨 اشتراكك سينتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'} فقط! (${endDate}). يرجى التجديد فوراً.`, { dedupeKey: 'sub_expiring3_' + endDate });
+                } else if (daysLeft <= 7) {
+                    addNotification('subscription_expiring', `⚠️ اشتراكك سينتهي خلال ${daysLeft} أيام (${endDate}). يرجى التجديد قريباً.`, { dedupeKey: 'sub_expiring7_' + endDate });
+                } else if (daysLeft <= 15) {
+                    addNotification('subscription_expiring', `📅 تنبيه: اشتراكك سينتهي خلال ${daysLeft} يوم (${endDate}).`, { dedupeKey: 'sub_expiring15_' + endDate });
+                }
+            }
+            
+            // 3. إشعارات تجديد الاشتراك (فقط للعملاء)
+            if (isClientUser()) {
+                const lastEndKey = 'alhasan_last_end_' + username;
+                const lastKnownEnd = localStorage.getItem(lastEndKey);
+                const currentEnd = state.subscription.endDate;
+                if (lastKnownEnd && currentEnd && currentEnd > lastKnownEnd) {
+                    addNotification('subscription_renewed', `✅ تم تجديد اشتراكك بنجاح! تاريخ الانتهاء الجديد: ${currentEnd}`, { dedupeKey: 'renewed_' + currentEnd });
+                }
+                if (currentEnd) localStorage.setItem(lastEndKey, currentEnd);
+            }
+            
+            // 4. إشعارات المخزون
+            state.products.forEach(p => {
+                if (p.qty <= 0) {
+                    addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون! يُنصح بإعادة التخزين.`, { dedupeKey: 'out_' + p.id });
+                } else if (p.qty <= (p.minLimit || 10)) {
+                    addNotification('low_stock', `⚠️ المنتج "${p.name}" قارب على النفاذ (المتبقي: ${p.qty} فقط).`, { dedupeKey: 'low_' + p.id + '_' + p.qty });
+                }
+            });
+            
+            renderNotifications();
+        }
+
+        // ⭐ فحص المخزون بعد البيع أو التعديل
+        function checkStockNotifications() {
+            state.products.forEach(p => {
+                if (p.qty <= 0) {
+                    addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون!`, { dedupeKey: 'out_' + p.id });
+                } else if (p.qty <= (p.minLimit || 10)) {
+                    addNotification('low_stock', `⚠️ المنتج "${p.name}" قارب على النفاذ (المتبقي: ${p.qty}).`, { dedupeKey: 'low_' + p.id + '_' + p.qty });
+                }
+            });
+        }
+        // ============================================================
+
         function saveStateToCloud() {
             try {
                 const plainData = JSON.parse(JSON.stringify(state));
                 const ref = getActiveRef();
-                console.log('💾 حفظ إلى:', ref.toString());
                 return ref.set(plainData).then(() => { console.log('✅ تم الحفظ في Firebase'); }).catch((error) => { console.error('❌ خطأ في الحفظ:', error); });
             } catch(e) { console.error('Cloud save error:', e); }
         }
@@ -739,6 +976,7 @@
                     requiredKeys.forEach(k => {
                         if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) { state[k] = JSON.parse(JSON.stringify(defaultState[k])); }
                     });
+                    if (!Array.isArray(state.notifications)) state.notifications = [];
                     if (!state.subscription || typeof state.subscription !== 'object') state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
                     if (!state.settings || typeof state.settings !== 'object') state.settings = JSON.parse(JSON.stringify(defaultState.settings));
                     if (!Array.isArray(state.adminClients)) state.adminClients = [];
@@ -770,6 +1008,7 @@
                     if (!Array.isArray(state.expenses)) state.expenses = [];
                     if (!Array.isArray(state.invoices)) state.invoices = [];
                     if (!Array.isArray(state.cart)) state.cart = [];
+                    if (!Array.isArray(state.notifications)) state.notifications = [];
                     try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
                     console.log('✅ تم تحميل بيانات العميل');
                     return true;
@@ -1199,8 +1438,6 @@
                 else daysRem.innerHTML = `<span class="text-red-400 font-bold">⚠️ الاشتراك منتهي!</span>`;
             }
         }
-        // ⭐ تم حذف دوال unlockSubscriptionEditor() و extendSubscription() ⭐
-
         function updateCredentials() {
             const newUsername = document.getElementById('settingsUsername').value.trim();
             const newPassword = document.getElementById('settingsPassword').value.trim();
@@ -1229,6 +1466,8 @@
             document.getElementById('dashLastUpdate').innerText = todayDate;
             updateSubscriptionUI();
             renderAll();
+            // ⭐ توليد الإشعارات التلقائية بعد تحميل التطبيق
+            setTimeout(() => { try { generateAutoNotifications(); } catch(e) { console.error('Notification error:', e); } }, 800);
         }
 
         window.addEventListener('load', () => {
@@ -1268,6 +1507,7 @@
             try { renderReports(); } catch(e) {}
             try { updateCartUI(); } catch(e) {}
             try { updateSubscriptionUI(); } catch(e) {}
+            try { renderNotifications(); } catch(e) {}
         }
 
         function switchPage(pageId, element) {
@@ -1548,6 +1788,8 @@
             renderPOSProducts();
             renderPosCategories();
             renderCustomers();
+            // ⭐ فحص المخزون بعد البيع
+            setTimeout(() => { try { checkStockNotifications(); } catch(e) {} }, 500);
         }
         function showReceipt(invoice) {
             document.getElementById('receiptStoreName').innerText = state.settings.storeName || 'متجري';
@@ -1648,6 +1890,7 @@
             closeProductModal();
             saveState();
             showToast(isEdit ? `تم تعديل "${name}"` : `تم إضافة "${name}"`, isEdit ? 'edit' : 'success');
+            setTimeout(() => { try { checkStockNotifications(); } catch(e) {} }, 500);
         }
         function editProduct(id) {
             const product = state.products.find(p => p.id === id);
@@ -1926,10 +2169,7 @@
         let scannerTargetInput = null;
 
         async function openScanner(targetInputId) {
-            if (typeof Html5Qrcode === 'undefined') {
-                showToast('⚠️ مكتبة قارئ الباركود لم يتم تحميلها', 'warning');
-                return;
-            }
+            if (typeof Html5Qrcode === 'undefined') { showToast('⚠️ مكتبة قارئ الباركود لم يتم تحميلها', 'warning'); return; }
             if (scannerActive) { console.log('⚠️ القارئ يعمل بالفعل'); return; }
             scannerTargetInput = targetInputId;
             lastScannedText = '';
@@ -2030,6 +2270,7 @@
                         state = importedState;
                         if (!state.subscription) state.subscription = currentSub;
                         if (!state.adminClients) state.adminClients = adminClients;
+                        if (!Array.isArray(state.notifications)) state.notifications = [];
                         saveState();
                         renderAll();
                         showToast('تم الاستيراد', 'success');
