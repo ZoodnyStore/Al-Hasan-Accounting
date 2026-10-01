@@ -616,20 +616,21 @@
         const db = firebase.database();
 
         // ============================================================
-        // ⭐⭐⭐ دوال آمنة ⭐⭐⭐
+        // ⭐⭐⭐ دوال آمنة وتشفير المفاتيح ⭐⭐⭐
         // ============================================================
+        function encodeKey(key) {
+            if (!key) return 'unknown';
+            // Firebase Realtime Database لا يسمح بـ . # $ [ ] / @
+            return key.replace(/[.#$\[\]\/@]/g, '_');
+        }
+        
         function safeJsonParse(str, fallback) {
             if (str === null || str === undefined) return fallback;
-            if (typeof str === 'object') return str; // already parsed
+            if (typeof str === 'object') return str;
             if (typeof str !== 'string') return fallback;
             const trimmed = str.trim();
             if (trimmed.length === 0) return fallback;
-            try {
-                return JSON.parse(trimmed);
-            } catch(e) {
-                console.warn('⚠️ فشل JSON.parse:', e.message);
-                return fallback;
-            }
+            try { return JSON.parse(trimmed); } catch(e) { console.warn('⚠️ JSON.parse فشل:', e.message); return fallback; }
         }
         
         function normalizeCloudData(cloudData) {
@@ -639,16 +640,15 @@
             return null;
         }
         
-        function isMasterUser() {
-            return sessionStorage.getItem('alhasan_master_logged_in') === 'true';
-        }
-        function isClientUser() {
-            return sessionStorage.getItem('alhasan_user_type') === 'client' 
-                && !!sessionStorage.getItem('alhasan_client_username');
-        }
+        function isMasterUser() { return sessionStorage.getItem('alhasan_master_logged_in') === 'true'; }
+        function isClientUser() { return sessionStorage.getItem('alhasan_user_type') === 'client' && !!sessionStorage.getItem('alhasan_client_username'); }
+        
         function getActiveRef() {
             if (isMasterUser()) return db.ref('appData/mainState');
-            if (isClientUser()) return db.ref('appData/clientData/' + sessionStorage.getItem('alhasan_client_username'));
+            if (isClientUser()) {
+                const dbKey = sessionStorage.getItem('alhasan_client_db_key');
+                if (dbKey) return db.ref('appData/clientData/' + dbKey);
+            }
             return db.ref('appData/mainState');
         }
         // ============================================================
@@ -679,41 +679,22 @@
 
         const defaultState = {
             settings: { exchangeRate: 14500, oldExchangeRate: 1400000, wholesaleDiscount: 10, isWholesale: false, activePosCategory: 'all', storeName: "الحسن للمحاسبة", phone: "+963 11 000 0000", address: "سوريا - دمشق", taxRate: 0 },
-            subscription: {
-                startDate: new Date().toISOString().slice(0, 10),
-                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-                username: 'admin',
-                password: 'admin123',
-                providerPhone: '+963 11 000 0000'
-            },
-            adminClients: [],
-            products: [], customers: [], expenses: [], invoices: [], cart: []
+            subscription: { startDate: new Date().toISOString().slice(0, 10), endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), username: 'admin', password: 'admin123', providerPhone: '+963 11 000 0000' },
+            adminClients: [], products: [], customers: [], expenses: [], invoices: [], cart: []
         };
-        
         function getFreshDefault() { return JSON.parse(JSON.stringify(defaultState)); }
 
-        // ⭐⭐⭐ الإصلاح: تحميل آمن من localStorage ⭐⭐⭐
         let state;
         try {
             const savedRaw = localStorage.getItem('ALHASAN_ACCOUNTING');
             const parsed = safeJsonParse(savedRaw, null);
-            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                state = parsed;
-            } else {
-                console.log('ℹ️ لا توجد بيانات محلية صالحة، استخدام البيانات الافتراضية');
-                state = getFreshDefault();
-            }
-        } catch(e) {
-            console.error('خطأ تحميل البيانات المحلية:', e);
-            state = getFreshDefault();
-        }
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) { state = parsed; }
+            else { state = getFreshDefault(); }
+        } catch(e) { state = getFreshDefault(); }
         
-        // ضمان وجود جميع المفاتيح
         const requiredKeys = ['subscription','adminClients','products','customers','expenses','invoices','cart','settings'];
         requiredKeys.forEach(k => {
-            if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) {
-                state[k] = JSON.parse(JSON.stringify(defaultState[k]));
-            }
+            if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) { state[k] = JSON.parse(JSON.stringify(defaultState[k])); }
         });
         if (!state.subscription || typeof state.subscription !== 'object') state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
         if (!state.settings || typeof state.settings !== 'object') state.settings = JSON.parse(JSON.stringify(defaultState.settings));
@@ -733,36 +714,21 @@
         let currentPayDebtCustomerId = null;
         let editingClientId = null;
 
-        // ============================================================
-        // ⭐⭐⭐ دوال المزامنة - الإصلاح الجوهري: حفظ كائن مباشرة ⭐⭐⭐
-        // ============================================================
         function saveStateToCloud() {
             try {
-                // نبني نسخة نظيفة من state لضمان عدم وجود بيانات غير قابلة للتسلسل
                 const plainData = JSON.parse(JSON.stringify(state));
                 const ref = getActiveRef();
-                console.log('💾 حفظ إلى:', ref.toString(), '| مشتركين:', (plainData.adminClients || []).length);
-                return ref.set(plainData).then(() => {
-                    console.log('✅ تم الحفظ في Firebase');
-                }).catch((error) => {
-                    console.error('❌ خطأ في الحفظ:', error);
-                });
-            } catch(e) { 
-                console.error('Cloud save error:', e); 
-            }
+                console.log('💾 حفظ إلى:', ref.toString());
+                return ref.set(plainData).then(() => { console.log('✅ تم الحفظ في Firebase'); }).catch((error) => { console.error('❌ خطأ في الحفظ:', error); });
+            } catch(e) { console.error('Cloud save error:', e); }
         }
 
         function loadStateFromCloud() {
-            if (isMasterUser()) {
-                console.log('👑 تحميل mainState (وضع المزود)');
-                return loadMainState();
-            }
+            if (isMasterUser()) { return loadMainState(); }
             if (isClientUser()) {
-                const u = sessionStorage.getItem('alhasan_client_username');
-                console.log('👤 تحميل بيانات العميل:', u);
-                return loadClientData(u);
+                const dbKey = sessionStorage.getItem('alhasan_client_db_key');
+                if (dbKey) return loadClientData(dbKey);
             }
-            console.log('🔄 تحميل mainState (افتراضي)');
             return loadMainState();
         }
         
@@ -770,14 +736,10 @@
             return db.ref('appData/mainState').once('value').then((snapshot) => {
                 const raw = snapshot.val();
                 const cloudData = normalizeCloudData(raw);
-                
                 if (cloudData && typeof cloudData === 'object') {
                     state = cloudData;
-                    // ضمان المفاتيح
                     requiredKeys.forEach(k => {
-                        if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) {
-                            state[k] = JSON.parse(JSON.stringify(defaultState[k]));
-                        }
+                        if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) { state[k] = JSON.parse(JSON.stringify(defaultState[k])); }
                     });
                     if (!state.subscription || typeof state.subscription !== 'object') state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
                     if (!state.settings || typeof state.settings !== 'object') state.settings = JSON.parse(JSON.stringify(defaultState.settings));
@@ -787,26 +749,20 @@
                     if (!state.subscription.endDate) state.subscription.endDate = defaultState.subscription.endDate;
                     if (!state.subscription.startDate) state.subscription.startDate = defaultState.subscription.startDate;
                     if (!state.subscription.providerPhone) state.subscription.providerPhone = '+963 11 000 0000';
-                    
                     try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
                     console.log('✅ تم تحميل mainState:', state.adminClients.length, 'مشترك');
                     return true;
                 } else {
-                    console.log('ℹ️ mainState فارغ، إنشاء أولي');
                     const initial = getFreshDefault();
                     return db.ref('appData/mainState').set(initial).then(() => false);
                 }
-            }).catch((error) => {
-                console.error('❌ خطأ في تحميل mainState:', error);
-                return false;
-            });
+            }).catch((error) => { console.error('❌ خطأ في تحميل mainState:', error); return false; });
         }
         
-        function loadClientData(username) {
-            return db.ref('appData/clientData/' + username).once('value').then((snapshot) => {
+        function loadClientData(encodedUsername) {
+            return db.ref('appData/clientData/' + encodedUsername).once('value').then((snapshot) => {
                 const raw = snapshot.val();
                 const cloudData = normalizeCloudData(raw);
-                
                 if (cloudData && typeof cloudData === 'object') {
                     state = cloudData;
                     state.adminClients = [];
@@ -822,14 +778,10 @@
                 } else {
                     const initial = getFreshDefault();
                     initial.adminClients = [];
-                    return db.ref('appData/clientData/' + username).set(initial).then(() => false);
+                    return db.ref('appData/clientData/' + encodedUsername).set(initial).then(() => false);
                 }
-            }).catch((error) => {
-                console.error('❌ خطأ في تحميل بيانات العميل:', error);
-                return false;
-            });
+            }).catch((error) => { console.error('❌ خطأ في تحميل بيانات العميل:', error); return false; });
         }
-        // ============================================================
 
         function saveState() {
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
@@ -850,9 +802,7 @@
             if (sidebar) sidebar.classList.remove('open');
             if (overlay) overlay.classList.remove('active');
         }
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 1024) closeMobileSidebar();
-        });
+        window.addEventListener('resize', () => { if (window.innerWidth >= 1024) closeMobileSidebar(); });
 
         async function login() {
             const username = document.getElementById('loginUsername').value.trim();
@@ -876,10 +826,7 @@
             
             // 2. العملاء
             const clients = Array.isArray(state.adminClients) ? state.adminClients : [];
-            const client = clients.find(c => 
-                (c.username || 'admin') === username && 
-                (c.password || 'admin123') === password
-            );
+            const client = clients.find(c => (c.username || 'admin') === username && (c.password || 'admin123') === password);
             
             if (client) {
                 const daysLeft = getClientDaysLeft(client.endDate);
@@ -890,20 +837,18 @@
                     return;
                 }
                 
+                // ⭐⭐⭐ الإصلاح: تشفير اسم المستخدم لقاعدة البيانات ⭐⭐⭐
+                const encodedUsername = encodeKey(username);
+                
                 sessionStorage.setItem('alhasan_logged_in', 'true');
                 sessionStorage.setItem('alhasan_user_type', 'client');
-                sessionStorage.setItem('alhasan_client_username', username);
+                sessionStorage.setItem('alhasan_client_username', username); // للعرض
+                sessionStorage.setItem('alhasan_client_db_key', encodedUsername); // لقاعدة البيانات
                 sessionStorage.setItem('alhasan_client_id', client.id);
                 
-                await loadClientData(username);
+                await loadClientData(encodedUsername);
                 
-                state.subscription = {
-                    startDate: client.startDate,
-                    endDate: client.endDate,
-                    username: client.username,
-                    password: client.password,
-                    providerPhone: state.subscription.providerPhone || ''
-                };
+                state.subscription = { startDate: client.startDate, endDate: client.endDate, username: client.username, password: client.password, providerPhone: state.subscription.providerPhone || '' };
                 
                 if (!state.settings.storeName || state.settings.storeName === 'الحسن للمحاسبة') {
                     state.settings.storeName = client.store || 'متجري';
@@ -930,6 +875,7 @@
                 sessionStorage.removeItem('alhasan_logged_in');
                 sessionStorage.removeItem('alhasan_user_type');
                 sessionStorage.removeItem('alhasan_client_username');
+                sessionStorage.removeItem('alhasan_client_db_key');
                 sessionStorage.removeItem('alhasan_client_id');
                 sessionStorage.removeItem('alhasan_master_logged_in');
                 location.reload();
@@ -953,9 +899,9 @@
         function masterLogin() {
             const pass = document.getElementById('masterPassword').value;
             if (pass === MASTER_KEY) {
-                // نظف كل شيء سابق
                 sessionStorage.removeItem('alhasan_user_type');
                 sessionStorage.removeItem('alhasan_client_username');
+                sessionStorage.removeItem('alhasan_client_db_key');
                 sessionStorage.removeItem('alhasan_client_id');
                 sessionStorage.removeItem('alhasan_logged_in');
                 sessionStorage.setItem('alhasan_master_logged_in', 'true');
@@ -964,9 +910,7 @@
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('adminPanel').classList.add('active');
                 
-                loadMainState().then(() => {
-                    renderAdminPanel();
-                });
+                loadMainState().then(() => { renderAdminPanel(); });
                 showToast('👑 مرحباً بك في لوحة المدير', 'success');
             } else {
                 document.getElementById('masterLoginError').classList.remove('hidden');
@@ -1019,9 +963,7 @@
             const container = document.getElementById('adminClientsGrid');
             const statusFilter = document.getElementById('adminStatusFilter').value;
             let filtered = (Array.isArray(state.adminClients) ? state.adminClients : []).filter(c =>
-                (c.name || '').includes(filter) ||
-                (c.store || '').includes(filter) ||
-                (c.phone || '').includes(filter)
+                (c.name || '').includes(filter) || (c.store || '').includes(filter) || (c.phone || '').includes(filter)
             );
             if (statusFilter !== 'all') {
                 filtered = filtered.filter(c => {
@@ -1129,27 +1071,19 @@
 
             const isEdit = !!editingClientId;
             const targetUsername = username;
+            const encodedUsername = encodeKey(targetUsername);
 
             if (isEdit) {
                 const index = state.adminClients.findIndex(c => c.id === editingClientId);
                 if (index !== -1) {
-                    state.adminClients[index] = {
-                        id: editingClientId, name, store, phone, city,
-                        username, password, startDate, endDate, payment, notes
-                    };
+                    state.adminClients[index] = { id: editingClientId, name, store, phone, city, username, password, startDate, endDate, payment, notes };
                 }
             } else {
-                state.adminClients.push({
-                    id: Date.now(),
-                    name, store, phone, city,
-                    username, password, startDate, endDate, payment, notes
-                });
+                state.adminClients.push({ id: Date.now(), name, store, phone, city, username, password, startDate, endDate, payment, notes });
             }
 
-            // حفظ محلي
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
 
-            // حفظ في Firebase مباشرة (كائن، وليس نص)
             const mainRef = db.ref('appData/mainState');
             const dataToSave = JSON.parse(JSON.stringify(state));
             
@@ -1157,8 +1091,8 @@
                 console.log('✅ تم حفظ المشترك في mainState. العدد:', state.adminClients.length);
                 
                 if (!isEdit) {
-                    // إنشاء مساحة بيانات للعميل الجديد
-                    const clientRef = db.ref('appData/clientData/' + targetUsername);
+                    // ⭐⭐⭐ إنشاء مساحة بيانات للعميل باستخدام الاسم المُشفّر ⭐⭐⭐
+                    const clientRef = db.ref('appData/clientData/' + encodedUsername);
                     const clientInitialState = getFreshDefault();
                     clientInitialState.adminClients = [];
                     clientInitialState.settings.storeName = store || 'متجري';
@@ -1166,15 +1100,9 @@
                     clientInitialState.settings.address = city || '';
                     clientInitialState.settings.exchangeRate = state.settings.exchangeRate;
                     clientInitialState.settings.oldExchangeRate = state.settings.oldExchangeRate;
-                    clientInitialState.subscription = {
-                        startDate: startDate,
-                        endDate: endDate,
-                        username: username,
-                        password: password,
-                        providerPhone: state.subscription.providerPhone || ''
-                    };
+                    clientInitialState.subscription = { startDate: startDate, endDate: endDate, username: username, password: password, providerPhone: state.subscription.providerPhone || '' };
                     clientRef.set(clientInitialState).then(() => {
-                        console.log('✅ تم إنشاء مساحة بيانات العميل:', targetUsername);
+                        console.log('✅ تم إنشاء مساحة بيانات العميل:', encodedUsername);
                         showToast(`✅ تم إضافة "${name}" - يمكنه الدخول بـ ${username}`, 'success');
                     }).catch(err => {
                         console.error('خطأ في إنشاء مساحة العميل:', err);
@@ -1342,15 +1270,9 @@
                     splash.style.opacity = '0';
                     setTimeout(() => {
                         splash.style.display = 'none';
-                        if (isMasterUser()) {
-                            document.getElementById('adminPanel').classList.add('active');
-                            renderAdminPanel();
-                        } else if (sessionStorage.getItem('alhasan_logged_in') === 'true') {
-                            startApp();
-                        } else {
-                            document.getElementById('loginScreen').classList.add('active');
-                            setTimeout(() => document.getElementById('loginUsername').focus(), 300);
-                        }
+                        if (isMasterUser()) { document.getElementById('adminPanel').classList.add('active'); renderAdminPanel(); }
+                        else if (sessionStorage.getItem('alhasan_logged_in') === 'true') { startApp(); }
+                        else { document.getElementById('loginScreen').classList.add('active'); setTimeout(() => document.getElementById('loginUsername').focus(), 300); }
                     }, 500);
                 }
             }, 1500);
@@ -1443,25 +1365,19 @@
         function resetData() {
             if (!checkSubscription()) return;
             if (confirm('سيتم إعادة الضبط. متأكد؟')) {
-                const sub = state.subscription;
-                const adminClients = state.adminClients;
+                const sub = state.subscription; const adminClients = state.adminClients;
                 state = getFreshDefault();
-                state.subscription = sub;
-                state.adminClients = adminClients;
-                saveState(); renderAll();
-                showToast('تم إعادة الضبط', 'info');
+                state.subscription = sub; state.adminClients = adminClients;
+                saveState(); renderAll(); showToast('تم إعادة الضبط', 'info');
             }
         }
         function deleteAllData() {
             if (!checkSubscription()) return;
             if (confirm('تحذير! حذف كل البيانات. متأكد؟')) {
-                const sub = state.subscription;
-                const adminClients = state.adminClients;
+                const sub = state.subscription; const adminClients = state.adminClients;
                 state.products = []; state.invoices = []; state.customers = []; state.expenses = []; state.cart = [];
-                state.subscription = sub;
-                state.adminClients = adminClients;
-                saveState(); renderAll();
-                showToast('تم الحذف', 'delete');
+                state.subscription = sub; state.adminClients = adminClients;
+                saveState(); renderAll(); showToast('تم الحذف', 'delete');
             }
         }
 
