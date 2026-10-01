@@ -11,10 +11,12 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    <!-- ============ Firebase SDK ============ -->
+    
+    <!-- ============ Firebase SDK (Realtime Database) ============ -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <!-- ====================================== -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <!-- ========================================================= -->
+    
     <script>
         tailwind.config = {
             theme: { extend: { fontFamily: { sans: ['Cairo', 'sans-serif'] },
@@ -1131,9 +1133,8 @@
 
         // تهيئة Firebase
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        // مرجع المستند الرئيسي الذي ستُحفظ فيه جميع بيانات التطبيق
-        const cloudDocRef = db.collection('appData').doc('mainState');
+        const db = firebase.database(); // استخدام Realtime Database
+        const cloudRef = db.ref('appData/mainState'); // مرجع البيانات الرئيسي
         // ============================================================
 
         const MASTER_KEY = 'ALHASAN-MASTER-2026';
@@ -1173,7 +1174,6 @@
             products: [], customers: [], expenses: [], invoices: [], cart: []
         };
 
-        // محاولة قراءة البيانات من localStorage كذاكرة مؤقتة (لتحميل أسرع)
         let state = JSON.parse(localStorage.getItem('ALHASAN_ACCOUNTING')) || JSON.parse(JSON.stringify(defaultState));
         if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
         if (!state.subscription.username) state.subscription.username = 'admin';
@@ -1193,14 +1193,14 @@
         let editingClientId = null;
 
         // ============================================================
-        // ⭐⭐⭐ دوال المزامنة السحابية مع Firebase ⭐⭐⭐
+        // ⭐⭐⭐ دوال المزامنة السحابية مع Realtime Database ⭐⭐⭐
         // ============================================================
         function saveStateToCloud() {
             try {
-                // نحول الكائن إلى JSON عادي لأن Firestore لا يقبل كائنات معقدة
-                const plainData = JSON.parse(JSON.stringify(state));
-                return cloudDocRef.set(plainData).then(() => {
-                    console.log('✅ تم الحفظ في Firebase');
+                // استخدام JSON.stringify لتجنب مشاكل المصفوفات في Realtime Database
+                const plainData = JSON.stringify(state);
+                return cloudRef.set(plainData).then(() => {
+                    console.log('✅ تم الحفظ في Firebase Realtime Database');
                 }).catch((error) => {
                     console.error('❌ خطأ في الحفظ في Firebase:', error);
                     showToast('⚠️ تعذر الحفظ في السحابة. تحقق من الإنترنت', 'warning');
@@ -1211,11 +1211,13 @@
         }
 
         function loadStateFromCloud() {
-            return cloudDocRef.get().then((doc) => {
-                if (doc.exists) {
-                    const cloudData = doc.data();
-                    // دمج البيانات السحابية مع البنية الحالية
+            return cloudRef.once('value').then((snapshot) => {
+                const cloudDataString = snapshot.val();
+                if (cloudDataString) {
+                    // فك تشفير JSON
+                    let cloudData = JSON.parse(cloudDataString);
                     state = cloudData;
+                    
                     // التأكد من وجود جميع المفاتيح
                     if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
                     if (!state.subscription.username) state.subscription.username = 'admin';
@@ -1249,11 +1251,8 @@
         // ============================================================
 
         function saveState() {
-            // 1. حفظ محلي فوري (للأداء السريع)
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
-            // 2. حفظ سحابي غير متزامن
             saveStateToCloud();
-            // 3. إعادة رسم الواجهة
             try { renderAll(); } catch(e) { console.error('Render error:', e); }
         }
 
@@ -1399,7 +1398,6 @@
                 });
             }
 
-            // ترتيب حسب الأيام المتبقية تصاعدياً
             filtered = [...filtered].sort((a, b) => getClientDaysLeft(a.endDate) - getClientDaysLeft(b.endDate));
 
             if (filtered.length === 0) {
@@ -1756,7 +1754,6 @@
                 const splashStatus = document.getElementById('splashStatus');
                 if (splashStatus) splashStatus.innerText = 'جاري الاتصال بالسحابة...';
 
-                // ⭐ تحميل البيانات من Firebase قبل بدء التطبيق ⭐
                 try {
                     await loadStateFromCloud();
                 } catch(e) {
@@ -1828,7 +1825,6 @@
             if (pageId === 'inventory') renderInventory();
             if (pageId === 'pos') { renderPosCategories(); renderPOSProducts(); }
             if (pageId === 'dashboard') renderDashboard();
-            // إغلاق القائمة الجانبية تلقائياً على الموبايل
             if (window.innerWidth < 1024) closeMobileSidebar();
         }
 
