@@ -376,9 +376,13 @@
                 </div>
                 <div id="settings" class="page">
                     <div class="mb-8 flex items-center gap-4"><div><h2 class="text-3xl font-bold text-white mb-1">الإعدادات</h2><p class="text-slate-400 text-sm">إعدادات النظام</p></div></div>
+                    <!-- ⭐ كرت معلومات الاشتراك (بدون زر محرر الاشتراك) ⭐ -->
                     <div class="bg-gradient-to-r from-navy-800 to-navy-700 p-6 rounded-2xl border-2 border-gold-500/40 shadow-xl mb-6">
-                        <div class="flex items-center gap-4 mb-6"><div class="w-12 h-12 bg-gold-500 rounded-xl flex items-center justify-center text-navy-900 text-xl shadow-lg"><i class="fa-solid fa-crown"></i></div><div class="flex-1"><h3 class="text-xl font-bold text-white">إدارة الاشتراك</h3><p class="text-slate-400 text-sm">معلومات اشتراكك</p></div></div>
-                        <div id="subscriptionInfoBox" class="bg-navy-900 p-5 rounded-xl border border-navy-700 mb-4">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 bg-gold-500 rounded-xl flex items-center justify-center text-navy-900 text-xl shadow-lg"><i class="fa-solid fa-crown"></i></div>
+                            <div class="flex-1"><h3 class="text-xl font-bold text-white">إدارة الاشتراك</h3><p class="text-slate-400 text-sm">معلومات اشتراكك</p></div>
+                        </div>
+                        <div id="subscriptionInfoBox" class="bg-navy-900 p-5 rounded-xl border border-navy-700">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="text-center"><div class="text-slate-400 text-xs mb-1">تاريخ البداية</div><div class="text-white font-bold" id="subStartDate">-</div></div>
                                 <div class="text-center border-x border-navy-700"><div class="text-slate-400 text-xs mb-1">تاريخ الانتهاء</div><div class="text-gold-400 font-bold text-lg" id="subEndDate">-</div></div>
@@ -386,15 +390,6 @@
                             </div>
                             <div id="subDaysRemaining" class="text-center mt-4 text-sm"></div>
                         </div>
-                        <div id="subscriptionRenewBox" class="hidden bg-navy-900 p-5 rounded-xl border border-gold-500/40">
-                            <h4 class="text-gold-400 font-bold mb-4"><i class="fa-solid fa-key"></i> تجديد الاشتراك</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div><label class="block text-slate-300 font-semibold mb-2 text-sm">تاريخ الانتهاء الجديد</label><input type="date" id="subscriptionNewEnd" class="w-full bg-navy-800 border border-navy-600 rounded-lg p-3 text-white focus:border-gold-400 outline-none"></div>
-                                <div><label class="block text-slate-300 font-semibold mb-2 text-sm">رقم هاتف المزود</label><input type="text" id="subscriptionProviderPhone" class="w-full bg-navy-800 border border-navy-600 rounded-lg p-3 text-white focus:border-gold-400 outline-none"></div>
-                            </div>
-                            <button onclick="extendSubscription()" class="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-3 rounded-xl flex items-center justify-center gap-2"><i class="fa-solid fa-check-circle"></i> تجديد الاشتراك</button>
-                        </div>
-                        <button id="unlockSubBtn" onclick="unlockSubscriptionEditor()" class="w-full bg-navy-900 hover:bg-navy-700 text-gold-400 font-bold py-3 rounded-xl border border-gold-500/30 flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> فتح محرر الاشتراك (للمزود)</button>
                     </div>
                     <div class="bg-navy-800 p-6 rounded-2xl border border-navy-700 shadow-xl mb-6">
                         <div class="flex items-center gap-4 mb-6"><div class="w-12 h-12 bg-gold-500 rounded-xl flex items-center justify-center text-navy-900 text-xl shadow-lg"><i class="fa-solid fa-dollar-sign"></i></div><div><h3 class="text-xl font-bold text-white">سعر الصرف</h3></div></div>
@@ -1203,31 +1198,9 @@
                 if (active) { if (daysLeft <= 5) daysRem.innerHTML = `<span class="text-orange-400 font-bold">⚠️ متبقي ${daysLeft} يوم!</span>`; else daysRem.innerHTML = `<span class="text-emerald-400">متبقي ${daysLeft} يوم</span>`; }
                 else daysRem.innerHTML = `<span class="text-red-400 font-bold">⚠️ الاشتراك منتهي!</span>`;
             }
-            const newEnd = document.getElementById('subscriptionNewEnd');
-            const provPhone = document.getElementById('subscriptionProviderPhone');
-            if (newEnd) newEnd.value = state.subscription.endDate || '';
-            if (provPhone) provPhone.value = state.subscription.providerPhone || '';
         }
-        function unlockSubscriptionEditor() {
-            const input = prompt('🔐 أدخل كلمة مرور المزود:');
-            if (input === null) return;
-            if (input === MASTER_KEY) { document.getElementById('subscriptionRenewBox').classList.remove('hidden'); document.getElementById('unlockSubBtn').classList.add('hidden'); showToast('✅ تم الفتح', 'success'); }
-            else { showToast('❌ كلمة المرور غير صحيحة', 'warning'); }
-        }
-        function extendSubscription() {
-            const newEnd = document.getElementById('subscriptionNewEnd').value;
-            const provPhone = document.getElementById('subscriptionProviderPhone').value.trim();
-            if (!newEnd) { showToast('⚠️ أدخل تاريخ الانتهاء', 'warning'); return; }
-            const newEndDate = new Date(newEnd + 'T23:59:59');
-            if (newEndDate < new Date()) { showToast('⚠️ التاريخ في المستقبل', 'warning'); return; }
-            state.subscription.endDate = newEnd;
-            state.subscription.providerPhone = provPhone;
-            saveState();
-            updateSubscriptionUI();
-            document.getElementById('subscriptionRenewBox').classList.add('hidden');
-            document.getElementById('unlockSubBtn').classList.remove('hidden');
-            showToast(`✅ تم التجديد حتى ${newEnd}`, 'success');
-        }
+        // ⭐ تم حذف دوال unlockSubscriptionEditor() و extendSubscription() ⭐
+
         function updateCredentials() {
             const newUsername = document.getElementById('settingsUsername').value.trim();
             const newPassword = document.getElementById('settingsPassword').value.trim();
@@ -1945,9 +1918,7 @@
             }, 100);
         }
 
-        // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
-        // ⭐⭐⭐ قارئ الباركود المُحسّن - نسخة جديدة تماماً لحل مشكلة التعليق ⭐⭐⭐
-        // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+        // ⭐⭐⭐ قارئ الباركود المُحسّن ⭐⭐⭐
         let html5QrCode = null;
         let scannerActive = false;
         let lastScannedText = '';
@@ -1955,185 +1926,87 @@
         let scannerTargetInput = null;
 
         async function openScanner(targetInputId) {
-            // التحقق من وجود المكتبة
             if (typeof Html5Qrcode === 'undefined') {
                 showToast('⚠️ مكتبة قارئ الباركود لم يتم تحميلها', 'warning');
                 return;
             }
-            
-            // منع تشغيل نسختين من الكاميرا في نفس الوقت
-            if (scannerActive) {
-                console.log('⚠️ القارئ يعمل بالفعل');
-                return;
-            }
-            
-            // حفظ الهدف وتصفير المتغيرات
+            if (scannerActive) { console.log('⚠️ القارئ يعمل بالفعل'); return; }
             scannerTargetInput = targetInputId;
             lastScannedText = '';
             lastScanTime = 0;
             scannerActive = true;
-            
-            // فتح النافذة
             openModal('scannerModal');
-            
-            // انتظار ظهور عنصر reader في DOM
             await new Promise(resolve => setTimeout(resolve, 400));
-            
             const readerEl = document.getElementById('reader');
-            if (!readerEl) {
-                scannerActive = false;
-                closeModal('scannerModal');
-                showToast('⚠️ لم يتم العثور على عنصر الكاميرا', 'warning');
-                return;
-            }
-            
-            // تنظيف أي محتوى سابق
+            if (!readerEl) { scannerActive = false; closeModal('scannerModal'); showToast('⚠️ لم يتم العثور على عنصر الكاميرا', 'warning'); return; }
             readerEl.innerHTML = '';
-            
             try {
-                // إنشاء نسخة جديدة من القارئ
                 html5QrCode = new Html5Qrcode("reader", { verbose: false });
-                
-                // إعدادات محسّنة للقراءة السريعة والدقيقة
                 const config = {
-                    fps: 30, // 30 إطار/ثانية للقراءة الأسرع
-                    // qrbox ديناميكي: يستخدم 80% من أصغر بُعد في نافذة الكاميرا
+                    fps: 30,
                     qrbox: function(viewfinderWidth, viewfinderHeight) {
                         const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
                         const boxSize = Math.floor(minEdge * 0.8);
-                        return {
-                            width: boxSize,
-                            height: Math.floor(boxSize * 0.7) // مستطيل أوسع قليلاً (مناسب للباركودات الخطية)
-                        };
+                        return { width: boxSize, height: Math.floor(boxSize * 0.7) };
                     },
-                    // استخدام الكشف الأصلي للمتصفح إذا كان مدعوماً (أسرع بكثير)
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true
-                    }
+                    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
                 };
-                
-                // بدء الكاميرا
-                await html5QrCode.start(
-                    { facingMode: "environment" }, // الكاميرا الخلفية
-                    config,
-                    onScanSuccess,
-                    onScanFailure
-                );
-                
+                await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
                 console.log('✅ الكاميرا تعمل بنجاح');
-                
             } catch (err) {
                 console.error('❌ خطأ تشغيل الكاميرا:', err);
                 let errorMsg = 'تعذر تشغيل الكاميرا';
                 const errStr = (err && err.message) ? err.message : String(err);
-                
-                if (errStr.includes('NotAllowedError') || errStr.includes('Permission') || errStr.includes('denied')) {
-                    errorMsg = 'يجب السماح للتطبيق بالوصول إلى الكاميرا من إعدادات المتصفح';
-                } else if (errStr.includes('NotFoundError') || errStr.includes('no camera')) {
-                    errorMsg = 'لم يتم العثور على كاميرا في هذا الجهاز';
-                } else if (errStr.includes('NotReadableError') || errStr.includes('in use')) {
-                    errorMsg = 'الكاميرا مستخدمة من تطبيق آخر';
-                } else if (errStr.includes('OverconstrainedError')) {
-                    errorMsg = 'مواصفات الكاميرا غير مدعومة';
-                }
-                
+                if (errStr.includes('NotAllowedError') || errStr.includes('Permission') || errStr.includes('denied')) errorMsg = 'يجب السماح للتطبيق بالوصول إلى الكاميرا من إعدادات المتصفح';
+                else if (errStr.includes('NotFoundError') || errStr.includes('no camera')) errorMsg = 'لم يتم العثور على كاميرا في هذا الجهاز';
+                else if (errStr.includes('NotReadableError') || errStr.includes('in use')) errorMsg = 'الكاميرا مستخدمة من تطبيق آخر';
+                else if (errStr.includes('OverconstrainedError')) errorMsg = 'مواصفات الكاميرا غير مدعومة';
                 showToast('⚠️ ' + errorMsg, 'warning');
                 await closeScanner();
             }
         }
-
         function onScanSuccess(decodedText, decodedResult) {
             if (!scannerActive) return;
-            
             const now = Date.now();
-            // تجاهل القراءات المكررة خلال 1.5 ثانية
-            if (decodedText === lastScannedText && (now - lastScanTime) < 1500) {
-                return;
-            }
+            if (decodedText === lastScannedText && (now - lastScanTime) < 1500) return;
             lastScannedText = decodedText;
             lastScanTime = now;
-            
             console.log('✅ تم مسح الباركود:', decodedText);
-            
-            // حفظ القيم قبل إيقاف الكاميرا
             const targetInput = scannerTargetInput;
             scannerActive = false;
-            
-            // اهتزاز تأكيدي (إن كان مدعوماً)
-            if (navigator.vibrate) {
-                try { navigator.vibrate(80); } catch(e) {}
-            }
-            
-            // إيقاف الكاميرا وتنظيف الموارد (بدون انتظار لتفادي التعليق)
+            if (navigator.vibrate) { try { navigator.vibrate(80); } catch(e) {} }
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
-                    if (html5QrCode) {
-                        try { html5QrCode.clear(); } catch(e) {}
-                        html5QrCode = null;
-                    }
-                }).catch(err => {
-                    console.warn('خطأ إيقاف الكاميرا:', err);
-                    html5QrCode = null;
-                });
+                    if (html5QrCode) { try { html5QrCode.clear(); } catch(e) {} html5QrCode = null; }
+                }).catch(err => { console.warn('خطأ إيقاف الكاميرا:', err); html5QrCode = null; });
             }
-            
-            // إغلاق نافذة الكاميرا فوراً
             closeModal('scannerModal');
-            
-            // معالجة النتيجة
             if (targetInput === 'posSearch') {
-                // البحث عن المنتج في المخزون بالباركود أو SKU
-                const product = state.products.find(p =>
-                    p.barcode === decodedText ||
-                    p.sku === decodedText
-                );
-                if (product) {
-                    addToCart(product.id);
-                    showToast(`✅ تم إضافة "${product.name}"`, 'success');
-                } else {
-                    showToast(`⚠️ لا يوجد منتج بالباركود: ${decodedText}`, 'warning');
-                }
+                const product = state.products.find(p => p.barcode === decodedText || p.sku === decodedText);
+                if (product) { addToCart(product.id); showToast(`✅ تم إضافة "${product.name}"`, 'success'); }
+                else { showToast(`⚠️ لا يوجد منتج بالباركود: ${decodedText}`, 'warning'); }
             } else if (targetInput) {
-                // ملء الحقل بالباركود
                 const inputEl = document.getElementById(targetInput);
                 if (inputEl) {
                     inputEl.value = decodedText;
-                    // إطلاق حدث input للبحث التلقائي
                     inputEl.dispatchEvent(new Event('input', { bubbles: true }));
                     inputEl.dispatchEvent(new Event('change', { bubbles: true }));
                     showToast('✅ تم مسح الباركود بنجاح', 'success');
                 }
             }
-            
             scannerTargetInput = null;
         }
-
-        function onScanFailure(error) {
-            // تجاهل الأخطاء العادية (لم يتم اكتشاف باركود في الإطار الحالي)
-            // لا نطبع أي شيء لتفادي امتلاء Console
-        }
-
+        function onScanFailure(error) {}
         async function closeScanner() {
             scannerActive = false;
             scannerTargetInput = null;
-            
             if (html5QrCode) {
-                try {
-                    await html5QrCode.stop();
-                } catch(e) {
-                    console.warn('خطأ في إيقاف القارئ:', e);
-                }
-                try {
-                    html5QrCode.clear();
-                } catch(e) {
-                    console.warn('خطأ في تنظيف القارئ:', e);
-                }
+                try { await html5QrCode.stop(); } catch(e) {}
+                try { html5QrCode.clear(); } catch(e) {}
                 html5QrCode = null;
             }
-            
             closeModal('scannerModal');
         }
-        // ⭐⭐⭐ نهاية قارئ الباركود ⭐⭐⭐
 
         function exportData() {
             const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
