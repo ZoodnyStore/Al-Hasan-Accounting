@@ -11,6 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- ============ Firebase SDK ============ -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- ====================================== -->
     <script>
         tailwind.config = {
             theme: { extend: { fontFamily: { sans: ['Cairo', 'sans-serif'] },
@@ -368,7 +372,7 @@
     <div id="splash-screen">
         <img src="icon.png" onerror="this.src='https://img.icons8.com/fluency/96/accounting.png'" alt="Logo" class="w-32 h-32 mb-6 rounded-3xl shadow-2xl shadow-gold-500/20 object-cover">
         <h1 class="text-3xl font-bold text-gold-400 mb-2">الحسن للمحاسبة</h1>
-        <p class="text-slate-400 mb-6">جاري تحميل النظام</p>
+        <p class="text-slate-400 mb-6" id="splashStatus">جاري تحميل النظام...</p>
         <div class="loader"></div>
     </div>
 
@@ -1111,6 +1115,27 @@
     </div>
 
     <script>
+        // ============================================================
+        // ⭐⭐⭐ Firebase Configuration & Initialization ⭐⭐⭐
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBRmtYWSSaJnmG63Li4gAbaFf1nG7keFKY",
+            authDomain: "al-hasan-accounting.firebaseapp.com",
+            databaseURL: "https://al-hasan-accounting-default-rtdb.firebaseio.com",
+            projectId: "al-hasan-accounting",
+            storageBucket: "al-hasan-accounting.firebasestorage.app",
+            messagingSenderId: "276449160714",
+            appId: "1:276449160714:web:6e99dac6703b9cd52c79f3",
+            measurementId: "G-HKT3CM1BFM"
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        // مرجع المستند الرئيسي الذي ستُحفظ فيه جميع بيانات التطبيق
+        const cloudDocRef = db.collection('appData').doc('mainState');
+        // ============================================================
+
         const MASTER_KEY = 'ALHASAN-MASTER-2026';
 
         function showToast(message, type = 'success') {
@@ -1148,6 +1173,7 @@
             products: [], customers: [], expenses: [], invoices: [], cart: []
         };
 
+        // محاولة قراءة البيانات من localStorage كذاكرة مؤقتة (لتحميل أسرع)
         let state = JSON.parse(localStorage.getItem('ALHASAN_ACCOUNTING')) || JSON.parse(JSON.stringify(defaultState));
         if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
         if (!state.subscription.username) state.subscription.username = 'admin';
@@ -1156,13 +1182,78 @@
         if (!state.subscription.startDate) state.subscription.startDate = new Date().toISOString().slice(0, 10);
         if (!state.subscription.providerPhone) state.subscription.providerPhone = '+963 11 000 0000';
         if (!state.adminClients) state.adminClients = [];
+        if (!state.products) state.products = [];
+        if (!state.customers) state.customers = [];
+        if (!state.expenses) state.expenses = [];
+        if (!state.invoices) state.invoices = [];
+        if (!state.cart) state.cart = [];
 
         let monthlyChartInstance = null, expenseChartInstance = null, dashboardChartInstance = null, editingProductId = null;
         let currentPayDebtCustomerId = null;
         let editingClientId = null;
 
+        // ============================================================
+        // ⭐⭐⭐ دوال المزامنة السحابية مع Firebase ⭐⭐⭐
+        // ============================================================
+        function saveStateToCloud() {
+            try {
+                // نحول الكائن إلى JSON عادي لأن Firestore لا يقبل كائنات معقدة
+                const plainData = JSON.parse(JSON.stringify(state));
+                return cloudDocRef.set(plainData).then(() => {
+                    console.log('✅ تم الحفظ في Firebase');
+                }).catch((error) => {
+                    console.error('❌ خطأ في الحفظ في Firebase:', error);
+                    showToast('⚠️ تعذر الحفظ في السحابة. تحقق من الإنترنت', 'warning');
+                });
+            } catch(e) {
+                console.error('Cloud save error:', e);
+            }
+        }
+
+        function loadStateFromCloud() {
+            return cloudDocRef.get().then((doc) => {
+                if (doc.exists) {
+                    const cloudData = doc.data();
+                    // دمج البيانات السحابية مع البنية الحالية
+                    state = cloudData;
+                    // التأكد من وجود جميع المفاتيح
+                    if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
+                    if (!state.subscription.username) state.subscription.username = 'admin';
+                    if (!state.subscription.password) state.subscription.password = 'admin123';
+                    if (!state.subscription.endDate) state.subscription.endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+                    if (!state.subscription.startDate) state.subscription.startDate = new Date().toISOString().slice(0, 10);
+                    if (!state.subscription.providerPhone) state.subscription.providerPhone = '+963 11 000 0000';
+                    if (!state.adminClients) state.adminClients = [];
+                    if (!state.products) state.products = [];
+                    if (!state.customers) state.customers = [];
+                    if (!state.expenses) state.expenses = [];
+                    if (!state.invoices) state.invoices = [];
+                    if (!state.cart) state.cart = [];
+                    if (!state.settings) state.settings = JSON.parse(JSON.stringify(defaultState.settings));
+
+                    // حفظ نسخة محلية سريعة
+                    try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+                    console.log('✅ تم تحميل البيانات من Firebase');
+                    return true;
+                } else {
+                    // أول مرة: نحفظ البيانات الافتراضية في السحابة
+                    console.log('ℹ️ لا توجد بيانات سحابية، يتم إنشاء المستند الأول');
+                    return saveStateToCloud().then(() => false);
+                }
+            }).catch((error) => {
+                console.error('❌ خطأ في التحميل من Firebase:', error);
+                showToast('⚠️ تعذر الاتصال بالسحابة. سيتم استخدام البيانات المحلية', 'warning');
+                return false;
+            });
+        }
+        // ============================================================
+
         function saveState() {
+            // 1. حفظ محلي فوري (للأداء السريع)
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+            // 2. حفظ سحابي غير متزامن
+            saveStateToCloud();
+            // 3. إعادة رسم الواجهة
             try { renderAll(); } catch(e) { console.error('Render error:', e); }
         }
 
@@ -1660,8 +1751,20 @@
         }
 
         window.addEventListener('load', () => {
-            setTimeout(() => {
+            setTimeout(async () => {
                 const splash = document.getElementById('splash-screen');
+                const splashStatus = document.getElementById('splashStatus');
+                if (splashStatus) splashStatus.innerText = 'جاري الاتصال بالسحابة...';
+
+                // ⭐ تحميل البيانات من Firebase قبل بدء التطبيق ⭐
+                try {
+                    await loadStateFromCloud();
+                } catch(e) {
+                    console.error('Cloud load failed:', e);
+                }
+
+                if (splashStatus) splashStatus.innerText = 'جاري تحميل النظام...';
+
                 if (splash) {
                     splash.style.opacity = '0';
                     setTimeout(() => {
@@ -1677,7 +1780,7 @@
                         }
                     }, 500);
                 }
-            }, 2000);
+            }, 1500);
         });
 
         document.addEventListener('keypress', function(e) {
@@ -1751,6 +1854,7 @@
             if (sn) sn.value = state.settings.exchangeRate;
             if (so) so.value = state.settings.oldExchangeRate;
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+            saveStateToCloud();
             try { renderDashboard(); } catch(e) {}
             try { renderReports(); } catch(e) {}
             try { updateCartTotals(); } catch(e) {}
