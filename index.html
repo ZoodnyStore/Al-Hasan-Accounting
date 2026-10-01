@@ -95,7 +95,6 @@
                 width: 100% !important;
             }
 
-            /* الشريط الجانبي يصبح Drawer منسدل */
             .app-container > aside {
                 position: fixed !important;
                 top: 0 !important;
@@ -129,7 +128,6 @@
                 flex: 1 1 auto !important;
             }
 
-            /* ترويسة أكثر إحكاماً */
             header {
                 padding: 0 8px !important;
                 gap: 6px !important;
@@ -159,12 +157,10 @@
 
             header .fa-bell { font-size: 15px !important; }
 
-            /* منطقة تمرير المحتوى */
             main > div.flex-1.overflow-y-auto {
                 padding: 10px !important;
             }
 
-            /* رؤوس الصفحات */
             .page > .flex.justify-between {
                 flex-wrap: wrap !important;
                 gap: 8px !important;
@@ -177,11 +173,6 @@
 
             .page button { font-size: 12px !important; }
 
-            /* =====================================================
-               التعديل المطلوب: كل خانتين بجانب بعضهما على الموبايل
-               ===================================================== */
-            
-            /* 1. كروت الإحصائيات (Dashboard Stats) */
             .stat-card { 
                 padding: 10px !important; 
                 gap: 6px !important; 
@@ -202,7 +193,6 @@
             .stat-card .text-sm { font-size: 0.65rem !important; }
             .stat-card .text-xs { font-size: 0.6rem !important; }
 
-            /* 2. شبكة المنتجات (Inventory / POS) */
             #posProductList, #inventoryListContainer {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 gap: 8px !important;
@@ -226,7 +216,6 @@
                 font-size: 0.6rem !important;
             }
 
-            /* 3. شبكة العملاء (Customers) */
             #customersListContainer {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 gap: 8px !important;
@@ -247,7 +236,6 @@
                 font-size: 0.6rem !important;
             }
 
-            /* 4. شبكة المصروفات (Expenses) */
             #expensesListContainer {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 gap: 8px !important;
@@ -268,7 +256,6 @@
                 font-size: 0.6rem !important;
             }
 
-            /* 5. شبكة المشتركين (Admin Panel) */
             #adminClientsGrid {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 gap: 8px !important;
@@ -289,7 +276,6 @@
                 font-size: 0.6rem !important;
             }
 
-            /* 6. جدول سجل المبيعات */
             #salesListContainer {
                 overflow-x: auto !important;
                 -webkit-overflow-scrolling: touch;
@@ -302,11 +288,9 @@
                 font-size: 0.7rem !important;
             }
 
-            /* 7. باقي الشبكات العامة */
             .grid.gap-4 { gap: 8px !important; }
             .grid.gap-6 { gap: 8px !important; }
 
-            /* 8. نقطة البيع POS */
             #pos > .grid {
                 height: auto !important;
                 min-height: auto !important;
@@ -323,7 +307,6 @@
                 max-height: 250px !important;
             }
 
-            /* 9. النوافذ المنبثقة */
             #addProductModal, #addCustomerModal, #addExpenseModal,
             #scannerModal, #payDebtModal, #addClientModal,
             #masterLoginModal, #receiptModal {
@@ -336,7 +319,6 @@
                 max-height: calc(100dvh - 16px) !important;
             }
 
-            /* 10. توست أصغر */
             .toast-notification {
                 min-width: auto !important;
                 padding: 12px 16px !important;
@@ -352,7 +334,6 @@
             .stat-card h3 { font-size: 0.65rem !important; }
             .page h2.text-3xl { font-size: 16px !important; }
             
-            /* تقليل حجم الخط في البطاقات الصغيرة أكثر */
             #posProductList h4, #inventoryListContainer h3,
             #customersListContainer h3, #expensesListContainer h3,
             #adminClientsGrid h3 {
@@ -415,7 +396,6 @@
     <!-- ⭐⭐⭐ لوحة المدير (للمزود) ⭐⭐⭐ -->
     <div id="adminPanel">
         <div class="max-w-7xl mx-auto p-4 md:p-6">
-            <!-- ترويسة لوحة المدير -->
             <div class="bg-gradient-to-r from-navy-800 to-navy-700 p-6 rounded-2xl border border-gold-500/30 shadow-xl mb-6">
                 <div class="flex items-center justify-between flex-wrap gap-4">
                     <div class="flex items-center gap-4">
@@ -438,7 +418,6 @@
                 </div>
             </div>
 
-            <!-- إحصائيات المدير -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div class="stat-card group hover:border-blue-500/30">
                     <div class="flex-1 min-w-0">
@@ -470,7 +449,6 @@
                 </div>
             </div>
 
-            <!-- إجمالي الإيرادات من الاشتراكات -->
             <div class="bg-gradient-to-l from-navy-800 to-navy-700 p-5 rounded-2xl border border-gold-500/30 shadow-xl mb-6">
                 <div class="flex items-center justify-between flex-wrap gap-4">
                     <div class="flex items-center gap-3">
@@ -488,7 +466,6 @@
                 </div>
             </div>
 
-            <!-- شريط البحث والفلاتر -->
             <div class="bg-navy-800 p-4 rounded-2xl border border-navy-700 shadow-lg mb-6 flex flex-col md:flex-row gap-4">
                 <div class="relative flex-1">
                     <i class="fa-solid fa-search absolute right-4 top-3.5 text-slate-500"></i>
@@ -502,13 +479,11 @@
                 </select>
             </div>
 
-            <!-- شبكة المشتركين -->
             <div id="adminClientsGrid" class="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8"></div>
         </div>
     </div>
 
     <div class="app-container" id="app">
-        <!-- Overlay للقائمة الجانبية على الموبايل -->
         <div id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
         <aside id="appSidebar" class="w-64 bg-gradient-to-b from-navy-900 to-navy-800 border-l border-navy-700 flex flex-col no-print shadow-2xl z-20">
@@ -595,7 +570,6 @@
                         <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-gold-500/5 rounded-full blur-2xl"></div>
                     </div>
                     
-                    <!-- التعديل: 2 أعمدة على الموبايل -->
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div class="stat-card group hover:border-emerald-500/30">
                             <div class="flex-1 min-w-0"><h3 class="text-slate-400 text-sm mb-1">إجمالي الإيرادات</h3><div class="text-2xl font-bold text-white" id="dashTotalRevenue">$0.00</div></div>
@@ -615,7 +589,6 @@
                         </div>
                     </div>
                     
-                    <!-- التعديل: 2 أعمدة على الموبايل -->
                     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                         <div class="stat-card"><div class="flex-1 min-w-0"><h3 class="text-slate-400 text-sm mb-1">مبيعات اليوم</h3><div class="text-2xl font-bold text-emerald-400 mb-1" id="dashTodaySales">0.00 $</div><div class="text-xs text-slate-400" id="dashTodaySalesSYP">0 ل.س جديدة</div></div><div class="stat-card-icon bg-emerald-500/10 text-emerald-500"><i class="fa-solid fa-dollar-sign"></i></div></div>
                         <div class="stat-card"><div class="flex-1 min-w-0"><h3 class="text-slate-400 text-sm mb-1">أرباح اليوم</h3><div class="text-2xl font-bold text-gold-400 mb-1" id="dashTodayProfit">0.00 $</div><div class="text-xs text-slate-400" id="dashTodayTransactions">0 عملية بيع</div></div><div class="stat-card-icon bg-gold-500/10 text-gold-400"><i class="fa-solid fa-chart-line"></i></div></div>
@@ -1131,11 +1104,19 @@
             measurementId: "G-HKT3CM1BFM"
         };
 
-        // تهيئة Firebase
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database(); // استخدام Realtime Database
-        const cloudRef = db.ref('appData/mainState'); // مرجع البيانات الرئيسي
+        const db = firebase.database();
         // ============================================================
+
+        // ⭐⭐⭐ دوال مساعدة لنظام تعدد المستخدمين ⭐⭐⭐
+        function getActiveRef() {
+            const userType = sessionStorage.getItem('alhasan_user_type');
+            const username = sessionStorage.getItem('alhasan_client_username');
+            if (userType === 'client' && username) {
+                return db.ref('appData/clientData/' + username);
+            }
+            return db.ref('appData/mainState');
+        }
 
         const MASTER_KEY = 'ALHASAN-MASTER-2026';
 
@@ -1193,37 +1174,57 @@
         let editingClientId = null;
 
         // ============================================================
-        // ⭐⭐⭐ دوال المزامنة السحابية مع Realtime Database ⭐⭐⭐
+        // ⭐⭐⭐ دوال المزامنة السحابية ⭐⭐⭐
         // ============================================================
         function saveStateToCloud() {
             try {
-                // استخدام JSON.stringify لتجنب مشاكل المصفوفات في Realtime Database
                 const plainData = JSON.stringify(state);
-                return cloudRef.set(plainData).then(() => {
-                    console.log('✅ تم الحفظ في Firebase Realtime Database');
+                return getActiveRef().set(plainData).then(() => {
+                    console.log('✅ تم الحفظ في Firebase');
                 }).catch((error) => {
-                    console.error('❌ خطأ في الحفظ في Firebase:', error);
-                    showToast('⚠️ تعذر الحفظ في السحابة. تحقق من الإنترنت', 'warning');
+                    console.error('❌ خطأ في الحفظ:', error);
+                    showToast('⚠️ تعذر الحفظ في السحابة', 'warning');
                 });
-            } catch(e) {
-                console.error('Cloud save error:', e);
-            }
+            } catch(e) { console.error('Cloud save error:', e); }
         }
 
         function loadStateFromCloud() {
-            return cloudRef.once('value').then((snapshot) => {
+            const userType = sessionStorage.getItem('alhasan_user_type');
+            const username = sessionStorage.getItem('alhasan_client_username');
+            
+            // حالة العميل
+            if (userType === 'client' && username) {
+                return db.ref('appData/clientData/' + username).once('value').then((snapshot) => {
+                    const cloudDataString = snapshot.val();
+                    if (cloudDataString) {
+                        state = JSON.parse(cloudDataString);
+                        if (!state.settings) state.settings = JSON.parse(JSON.stringify(defaultState.settings));
+                        if (!state.products) state.products = [];
+                        if (!state.customers) state.customers = [];
+                        if (!state.expenses) state.expenses = [];
+                        if (!state.invoices) state.invoices = [];
+                        if (!state.cart) state.cart = [];
+                        state.adminClients = [];
+                        try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+                        return true;
+                    } else {
+                        state = JSON.parse(JSON.stringify(defaultState));
+                        state.adminClients = [];
+                        return db.ref('appData/clientData/' + username).set(JSON.stringify(state)).then(() => false);
+                    }
+                }).catch((error) => { console.error('خطأ تحميل العميل:', error); return false; });
+            }
+            
+            // حالة المدير
+            return db.ref('appData/mainState').once('value').then((snapshot) => {
                 const cloudDataString = snapshot.val();
                 if (cloudDataString) {
-                    // فك تشفير JSON
-                    let cloudData = JSON.parse(cloudDataString);
-                    state = cloudData;
-                    
-                    // التأكد من وجود جميع المفاتيح
+                    state = JSON.parse(cloudDataString);
                     if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
                     if (!state.subscription.username) state.subscription.username = 'admin';
                     if (!state.subscription.password) state.subscription.password = 'admin123';
-                    if (!state.subscription.endDate) state.subscription.endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-                    if (!state.subscription.startDate) state.subscription.startDate = new Date().toISOString().slice(0, 10);
+                    if (!state.subscription.endDate) state.subscription.endDate = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10);
+                    if (!state.subscription.startDate) state.subscription.startDate = new Date().toISOString().slice(0,10);
                     if (!state.subscription.providerPhone) state.subscription.providerPhone = '+963 11 000 0000';
                     if (!state.adminClients) state.adminClients = [];
                     if (!state.products) state.products = [];
@@ -1232,21 +1233,12 @@
                     if (!state.invoices) state.invoices = [];
                     if (!state.cart) state.cart = [];
                     if (!state.settings) state.settings = JSON.parse(JSON.stringify(defaultState.settings));
-
-                    // حفظ نسخة محلية سريعة
                     try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
-                    console.log('✅ تم تحميل البيانات من Firebase');
                     return true;
                 } else {
-                    // أول مرة: نحفظ البيانات الافتراضية في السحابة
-                    console.log('ℹ️ لا توجد بيانات سحابية، يتم إنشاء المستند الأول');
                     return saveStateToCloud().then(() => false);
                 }
-            }).catch((error) => {
-                console.error('❌ خطأ في التحميل من Firebase:', error);
-                showToast('⚠️ تعذر الاتصال بالسحابة. سيتم استخدام البيانات المحلية', 'warning');
-                return false;
-            });
+            }).catch((error) => { console.error('خطأ تحميل المدير:', error); return false; });
         }
         // ============================================================
 
@@ -1276,28 +1268,84 @@
             if (window.innerWidth >= 1024) closeMobileSidebar();
         });
 
-        // ⭐⭐⭐ تسجيل الدخول ⭐⭐⭐
-        function login() {
+        // ⭐⭐⭐ تسجيل الدخول (يدعم المدير والعملاء) ⭐⭐⭐
+        async function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
             const errorBox = document.getElementById('loginError');
-
+            const errorText = document.getElementById('loginErrorText');
+            
+            // 1. حساب المدير الرئيسي
             if (username === state.subscription.username && password === state.subscription.password) {
                 sessionStorage.setItem('alhasan_logged_in', 'true');
+                sessionStorage.setItem('alhasan_user_type', 'admin');
+                sessionStorage.setItem('alhasan_client_username', username);
                 errorBox.classList.add('hidden');
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('loginPassword').value = '';
                 startApp();
-            } else {
-                errorBox.classList.remove('hidden');
-                document.getElementById('loginErrorText').innerText = 'اسم المستخدم أو كلمة المرور غير صحيحة';
-                showToast('❌ بيانات الدخول غير صحيحة', 'warning');
+                return;
             }
+            
+            // 2. البحث في قائمة العملاء
+            const clients = state.adminClients || [];
+            const client = clients.find(c => 
+                (c.username || 'admin') === username && 
+                (c.password || 'admin123') === password
+            );
+            
+            if (client) {
+                const daysLeft = getClientDaysLeft(client.endDate);
+                if (daysLeft <= 0) {
+                    errorBox.classList.remove('hidden');
+                    errorText.innerText = '⚠️ اشتراكك منتهي! تواصل مع المزود: ' + (state.subscription.providerPhone || '');
+                    showToast('❌ اشتراكك منتهي! تواصل مع المزود', 'warning');
+                    return;
+                }
+                
+                sessionStorage.setItem('alhasan_logged_in', 'true');
+                sessionStorage.setItem('alhasan_user_type', 'client');
+                sessionStorage.setItem('alhasan_client_username', username);
+                sessionStorage.setItem('alhasan_client_id', client.id);
+                
+                // تحميل بيانات العميل الخاصة
+                await loadStateFromCloud();
+                
+                // مزامنة بيانات الاشتراك
+                state.subscription = {
+                    startDate: client.startDate,
+                    endDate: client.endDate,
+                    username: client.username,
+                    password: client.password,
+                    providerPhone: state.subscription.providerPhone || ''
+                };
+                
+                if (!state.settings.storeName || state.settings.storeName === 'الحسن للمحاسبة') {
+                    state.settings.storeName = client.store || 'متجري';
+                    state.settings.phone = client.phone || state.settings.phone;
+                    state.settings.address = client.city || state.settings.address;
+                }
+                saveStateToCloud();
+                
+                errorBox.classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('loginPassword').value = '';
+                showToast(`👋 مرحباً ${client.name}`, 'success');
+                startApp();
+                return;
+            }
+            
+            errorBox.classList.remove('hidden');
+            errorText.innerText = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+            showToast('❌ بيانات الدخول غير صحيحة', 'warning');
         }
 
         function logout() {
             if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
                 sessionStorage.removeItem('alhasan_logged_in');
+                sessionStorage.removeItem('alhasan_user_type');
+                sessionStorage.removeItem('alhasan_client_username');
+                sessionStorage.removeItem('alhasan_client_id');
                 location.reload();
             }
         }
@@ -1552,6 +1600,8 @@
                 return;
             }
 
+            const oldUsername = editingClientId ? (state.adminClients.find(c => c.id === editingClientId)?.username) : null;
+
             if (editingClientId) {
                 const index = state.adminClients.findIndex(c => c.id === editingClientId);
                 if (index !== -1) {
@@ -1568,6 +1618,30 @@
                     username, password, startDate, endDate, payment, notes
                 });
                 showToast(`✅ تم إضافة المشترك "${name}"`, 'success');
+
+                // ⭐ إنشاء مساحة بيانات خاصة بالعميل الجديد
+                const newClientRef = db.ref('appData/clientData/' + username);
+                newClientRef.once('value').then(snapshot => {
+                    if (!snapshot.exists()) {
+                        const clientInitialState = JSON.parse(JSON.stringify(defaultState));
+                        clientInitialState.adminClients = [];
+                        clientInitialState.settings.storeName = store || 'متجري';
+                        clientInitialState.settings.phone = phone || '';
+                        clientInitialState.settings.address = city || '';
+                        clientInitialState.settings.exchangeRate = state.settings.exchangeRate;
+                        clientInitialState.settings.oldExchangeRate = state.settings.oldExchangeRate;
+                        clientInitialState.subscription = {
+                            startDate: startDate,
+                            endDate: endDate,
+                            username: username,
+                            password: password,
+                            providerPhone: state.subscription.providerPhone || ''
+                        };
+                        newClientRef.set(JSON.stringify(clientInitialState)).then(() => {
+                            console.log('✅ تم إنشاء مساحة بيانات العميل:', username);
+                        });
+                    }
+                });
             }
 
             saveState();
@@ -1754,6 +1828,10 @@
                 const splashStatus = document.getElementById('splashStatus');
                 if (splashStatus) splashStatus.innerText = 'جاري الاتصال بالسحابة...';
 
+                const savedType = sessionStorage.getItem('alhasan_user_type');
+                const savedUser = sessionStorage.getItem('alhasan_client_username');
+                console.log('نوع المستخدم الحالي:', savedType, 'اسم المستخدم:', savedUser);
+
                 try {
                     await loadStateFromCloud();
                 } catch(e) {
@@ -1801,6 +1879,11 @@
         }
 
         function switchPage(pageId, element) {
+            // منع العملاء من الوصول إلى الإعدادات الحساسة
+            if (pageId === 'settings' && sessionStorage.getItem('alhasan_user_type') === 'client') {
+                showToast('⚠️ غير مصرح لك بالوصول إلى الإعدادات', 'warning');
+                return;
+            }
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
