@@ -64,7 +64,6 @@
         * { -webkit-tap-highlight-color: transparent; }
         .mobile-menu-btn { display: none !important; }
         #sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 150; backdrop-filter: blur(3px); }
-        /* ⭐ اسم منتج ثابت الارتفاع لتناسق الكروت ⭐ */
         .product-card .product-name {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -73,7 +72,6 @@
             min-height: 3.6rem;
             line-height: 1.35;
         }
-        /* ⭐ على اللابتوب: تصغير كروت المخزون لتطابق حجم كروت نقطة البيع ⭐ */
         @media (min-width: 1024px) {
             .product-card .product-name {
                 font-size: 0.875rem;
@@ -2117,8 +2115,57 @@
             let filtered = state.invoices.filter(inv => inv.id.includes(filter) || (inv.customerName && inv.customerName.includes(filter)) || (inv.items && inv.items.some(item => item.name.includes(filter))));
             if (typeFilter !== 'all') filtered = filtered.filter(inv => (typeFilter === 'wholesale' && inv.isWholesale) || (typeFilter === 'retail' && !inv.isWholesale));
             if (filtered.length === 0) container.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-slate-500"><i class="fa-solid fa-receipt text-6xl mb-4 opacity-50"></i><p class="text-lg">لا توجد معاملات</p></div>`;
-            else container.innerHTML = `<table class="w-full text-right"><thead class="bg-navy-900 text-gold-400 text-sm"><tr><th class="p-4">الفاتورة</th><th class="p-4">التاريخ</th><th class="p-4">العميل</th><th class="p-4">الدفع</th><th class="p-4">النوع</th><th class="p-4">الإجمالي</th><th class="p-4">الربح</th><th class="p-4">إجراء</th></tr></thead><tbody>${filtered.map(inv => `<tr class="border-b border-navy-700"><td class="p-4 text-gold-400 font-bold">${inv.id}</td><td class="p-4 text-slate-400">${inv.date}</td><td class="p-4 font-bold">${inv.customerName || 'زبون نقدي'}</td><td class="p-4"><span class="bg-navy-700 px-2 py-1 rounded text-xs">${inv.paymentMethod || 'نقدي'}</span></td><td class="p-4"><span class="px-2 py-1 rounded text-xs ${inv.isWholesale ? 'bg-purple-500/20 text-purple-400' : 'bg-gold-500/20 text-gold-400'}">${inv.isWholesale ? 'بيع جملة' : 'بيع مفرق'}</span></td><td class="p-4 font-bold">${formatMoney(inv.totalUSD)}</td><td class="p-4 font-bold text-emerald-400">${formatMoney(inv.profit || 0)}</td><td class="p-4"><button onclick='showReceipt(${JSON.stringify(inv).replace(/'/g, "&#39;")})' class="text-blue-400"><i class="fa-solid fa-eye"></i></button></td></tr>`).join('')}</tbody></table>`;
+            else container.innerHTML = `<table class="w-full text-right"><thead class="bg-navy-900 text-gold-400 text-sm"><tr><th class="p-4">الفاتورة</th><th class="p-4">التاريخ</th><th class="p-4">العميل</th><th class="p-4">الدفع</th><th class="p-4">النوع</th><th class="p-4">الإجمالي</th><th class="p-4">الربح</th><th class="p-4 text-center">إجراء</th></tr></thead><tbody>${filtered.map(inv => `<tr class="border-b border-navy-700 hover:bg-navy-700/30 transition-colors"><td class="p-4 text-gold-400 font-bold">${inv.id}</td><td class="p-4 text-slate-400">${inv.date}</td><td class="p-4 font-bold">${inv.customerName || 'زبون نقدي'}</td><td class="p-4"><span class="bg-navy-700 px-2 py-1 rounded text-xs">${inv.paymentMethod || 'نقدي'}</span></td><td class="p-4"><span class="px-2 py-1 rounded text-xs ${inv.isWholesale ? 'bg-purple-500/20 text-purple-400' : 'bg-gold-500/20 text-gold-400'}">${inv.isWholesale ? 'بيع جملة' : 'بيع مفرق'}</span></td><td class="p-4 font-bold">${formatMoney(inv.totalUSD)}</td><td class="p-4 font-bold text-emerald-400">${formatMoney(inv.profit || 0)}</td><td class="p-4"><div class="flex gap-3 items-center justify-center"><button onclick='showReceipt(${JSON.stringify(inv).replace(/'/g, "&#39;")})' class="text-blue-400 hover:text-blue-300 transition-colors" title="عرض الفاتورة"><i class="fa-solid fa-eye"></i></button><button onclick="deleteInvoice('${inv.id}')" class="text-red-400 hover:text-red-300 transition-colors" title="حذف الفاتورة"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join('')}</tbody></table>`;
         }
+
+        // ⭐⭐⭐ دالة حذف الفاتورة ⭐⭐⭐
+        function deleteInvoice(invoiceId) {
+            if (!checkSubscription()) return;
+            const invoice = state.invoices.find(inv => inv.id === invoiceId);
+            if (!invoice) { showToast('⚠️ الفاتورة غير موجودة', 'warning'); return; }
+            const confirmMsg = `⚠️ هل أنت متأكد من حذف الفاتورة ${invoiceId}؟\n\n` +
+                               `💰 الإجمالي: ${formatMoney(invoice.totalUSD)}\n` +
+                               `👤 العميل: ${invoice.customerName || 'زبون نقدي'}\n` +
+                               `📦 عدد الأصناف: ${(invoice.items || []).length}\n\n` +
+                               `سيتم:\n` +
+                               `✅ إرجاع كميات المنتجات إلى المخزون\n` +
+                               `✅ إرجاع حد الدين للعميل (إن كانت بالدين)\n` +
+                               `✅ إلغاؤها من جميع الإحصائيات والأرباح\n\n` +
+                               `هل أنت متأكد؟`;
+            if (!confirm(confirmMsg)) return;
+
+            // 1) إرجاع كميات المنتجات للمخزون
+            if (Array.isArray(invoice.items)) {
+                invoice.items.forEach(item => {
+                    const product = state.products.find(p => p.id === item.id);
+                    if (product) {
+                        product.qty = (product.qty || 0) + (item.qty || 0);
+                    }
+                });
+            }
+
+            // 2) إرجاع حد الدين للعميل إن كانت الفاتورة بالدين
+            if (invoice.paymentMethod === 'دين' && invoice.customerName) {
+                const customer = state.customers.find(c => (c.name || '').trim() === (invoice.customerName || '').trim());
+                if (customer) {
+                    customer.creditLimit = (customer.creditLimit || 0) + (invoice.totalUSD || 0);
+                    // تسجيل ملاحظة الحذف
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('ar-EG');
+                    const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                    const note = `🔄 [${dateStr} - ${timeStr}] إلغاء فاتورة بالدين: ${invoice.id}\n    استرجاع: ${formatMoney(invoice.totalUSD)} إلى حد الدين`;
+                    customer.notes = customer.notes ? customer.notes + '\n\n' + note : note;
+                }
+            }
+
+            // 3) حذف الفاتورة من السجل
+            state.invoices = state.invoices.filter(inv => inv.id !== invoiceId);
+
+            // 4) حفظ + إعادة عرض كل شيء
+            saveState();
+            showToast(`🗑️ تم حذف الفاتورة ${invoiceId} وإرجاع الكميات`, 'delete');
+        }
+
         function exportSalesCSV() {
             if (state.invoices.length === 0) { showToast('لا توجد بيانات', 'warning'); return; }
             let csvContent = "رقم الفاتورة,التاريخ,العميل,طريقة الدفع,النوع,عدد القطع,الإجمالي ($),الربح ($)\n";
