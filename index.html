@@ -94,7 +94,6 @@
             #cartItems { max-height: 250px !important; }
             .toast-notification { min-width: auto !important; padding: 12px 16px !important; font-size: 12px !important; }
         }
-        /* Notifications dropdown */
         #notificationsDropdown { display: none; }
         #notificationsDropdown.open { display: flex; }
         .notif-item { transition: all 0.2s; }
@@ -236,7 +235,7 @@
                     <h3 class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-bell text-gold-400"></i> الإشعارات</h3>
                     <div class="flex gap-3 items-center">
                         <button onclick="markAllNotificationsAsRead()" class="text-xs text-gold-400 hover:text-gold-300 transition-colors" title="تعليم الكل كمقروء"><i class="fa-solid fa-check-double"></i></button>
-                        <button onclick="clearAllNotifications()" class="text-xs text-red-400 hover:text-red-300 transition-colors" title="حذف الكل"><i class="fa-solid fa-trash"></i></button>
+                        <button id="clearAllNotifBtn" onclick="clearAllNotifications()" class="text-xs text-red-400 hover:text-red-300 transition-colors" title="حذف الكل"><i class="fa-solid fa-trash"></i></button>
                         <button onclick="toggleNotifications(event)" class="text-slate-400 hover:text-white transition-colors" title="إغلاق"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 </div>
@@ -749,7 +748,6 @@
         function addNotification(type, message, options = {}) {
             if (!Array.isArray(state.notifications)) state.notifications = [];
             
-            // منع التكرار بناءً على dedupeKey
             if (options.dedupeKey) {
                 const exists = state.notifications.find(n => n.dedupeKey === options.dedupeKey);
                 if (exists) return;
@@ -767,12 +765,10 @@
             
             state.notifications.unshift(notification);
             
-            // حد أقصى 100 إشعار
             if (state.notifications.length > 100) {
                 state.notifications = state.notifications.slice(0, 100);
             }
             
-            // حفظ محلي وسحابي
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
             saveStateToCloud();
             
@@ -781,6 +777,16 @@
 
         function renderNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
+            
+            // ⭐ إخفاء زر الحذف للعميل
+            const clearBtn = document.getElementById('clearAllNotifBtn');
+            if (clearBtn) {
+                if (isClientUser()) {
+                    clearBtn.style.display = 'none';
+                } else {
+                    clearBtn.style.display = '';
+                }
+            }
             
             const unreadCount = state.notifications.filter(n => !n.read).length;
             const badge = document.getElementById('notifBadge');
@@ -860,7 +866,12 @@
             }
         }
 
+        // ⭐⭐⭐ الحماية: منع العميل من حذف الإشعارات ⭐⭐⭐
         function clearAllNotifications() {
+            if (isClientUser()) {
+                showToast('⚠️ غير مصرح لك بحذف الإشعارات', 'warning');
+                return;
+            }
             if (!Array.isArray(state.notifications) || state.notifications.length === 0) return;
             if (confirm('هل أنت متأكد من حذف جميع الإشعارات؟')) {
                 state.notifications = [];
@@ -871,7 +882,6 @@
             }
         }
 
-        // إغلاق قائمة الإشعارات عند الضغط خارجها
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('notificationsDropdown');
             const bell = document.getElementById('notificationBell');
@@ -880,14 +890,12 @@
             dropdown.classList.remove('open');
         });
 
-        // ⭐ توليد الإشعارات التلقائية
         function generateAutoNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
             
             const username = sessionStorage.getItem('alhasan_client_username') || 'admin';
             const isAdmin = !isClientUser();
             
-            // 1. إشعار ترحيبي عند الدخول لأول مرة (يُحفظ في localStorage لكل مستخدم)
             const welcomeKey = 'alhasan_welcomed_' + username;
             if (!localStorage.getItem(welcomeKey)) {
                 if (isAdmin) {
@@ -899,7 +907,6 @@
                 localStorage.setItem(welcomeKey, 'true');
             }
             
-            // 2. إشعارات الاشتراك
             if (state.subscription && state.subscription.endDate) {
                 const daysLeft = getDaysRemaining();
                 const endDate = state.subscription.endDate;
@@ -915,7 +922,6 @@
                 }
             }
             
-            // 3. إشعارات تجديد الاشتراك (فقط للعملاء)
             if (isClientUser()) {
                 const lastEndKey = 'alhasan_last_end_' + username;
                 const lastKnownEnd = localStorage.getItem(lastEndKey);
@@ -926,7 +932,6 @@
                 if (currentEnd) localStorage.setItem(lastEndKey, currentEnd);
             }
             
-            // 4. إشعارات المخزون
             state.products.forEach(p => {
                 if (p.qty <= 0) {
                     addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون! يُنصح بإعادة التخزين.`, { dedupeKey: 'out_' + p.id });
@@ -938,7 +943,6 @@
             renderNotifications();
         }
 
-        // ⭐ فحص المخزون بعد البيع أو التعديل
         function checkStockNotifications() {
             state.products.forEach(p => {
                 if (p.qty <= 0) {
@@ -1466,7 +1470,6 @@
             document.getElementById('dashLastUpdate').innerText = todayDate;
             updateSubscriptionUI();
             renderAll();
-            // ⭐ توليد الإشعارات التلقائية بعد تحميل التطبيق
             setTimeout(() => { try { generateAutoNotifications(); } catch(e) { console.error('Notification error:', e); } }, 800);
         }
 
@@ -1788,7 +1791,6 @@
             renderPOSProducts();
             renderPosCategories();
             renderCustomers();
-            // ⭐ فحص المخزون بعد البيع
             setTimeout(() => { try { checkStockNotifications(); } catch(e) {} }, 500);
         }
         function showReceipt(invoice) {
@@ -2161,7 +2163,6 @@
             }, 100);
         }
 
-        // ⭐⭐⭐ قارئ الباركود المُحسّن ⭐⭐⭐
         let html5QrCode = null;
         let scannerActive = false;
         let lastScannedText = '';
