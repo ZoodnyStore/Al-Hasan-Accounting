@@ -860,7 +860,7 @@
 
     <script>
         // ============================================================
-        // Firebase Configuration
+        // Firebase Configuration - مع حماية كاملة من الفشل
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBRmtYWSSaJnmG63Li4gAbaFf1nG7keFKY",
@@ -873,17 +873,33 @@
             measurementId: "G-HKT3CM1BFM"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const cloudDocRef = db.collection('appData').doc('mainState');
-
-        const MASTER_KEY = 'ALHASAN-MASTER-2026';
-
-        // ⭐ متغيرات المزامنة الفورية
+        // ⭐ متغيرات عامة
+        let firebaseAvailable = false;
+        let db = null;
+        let cloudDocRef = null;
         let lastSavedJson = null;
         let realtimeUnsubscribe = null;
         let isRealtimeListenerActive = false;
         let remoteUpdateTimer = null;
+        let realtimeRetryCount = 0;
+
+        // تهيئة Firebase بأمان تام
+        try {
+            if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                cloudDocRef = db.collection('appData').doc('mainState');
+                firebaseAvailable = true;
+                console.log('✅ Firebase initialized');
+            } else {
+                console.warn('⚠️ Firebase SDK غير متوفر - سيعمل التطبيق محلياً');
+            }
+        } catch (e) {
+            console.error('❌ Firebase init failed:', e);
+            firebaseAvailable = false;
+        }
+
+        const MASTER_KEY = 'ALHASAN-MASTER-2026';
 
         function showToast(message, type = 'success') {
             try {
@@ -920,9 +936,13 @@
             products: [], customers: [], expenses: [], invoices: [], cart: []
         };
 
-        let state = JSON.parse(localStorage.getItem('ALHASAN_ACCOUNTING')) || JSON.parse(JSON.stringify(defaultState));
+        let state;
+        try {
+            state = JSON.parse(localStorage.getItem('ALHASAN_ACCOUNTING')) || JSON.parse(JSON.stringify(defaultState));
+        } catch(e) {
+            state = JSON.parse(JSON.stringify(defaultState));
+        }
 
-        // ⭐ دالة موحدة للتأكد من وجود جميع المفاتيح
         function ensureStateKeys() {
             if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
             if (!state.subscription.username) state.subscription.username = 'admin';
@@ -945,80 +965,110 @@
         let editingClientId = null;
 
         // ============================================================
-        // ⭐⭐⭐ دوال المزامنة السحابية مع Firebase ⭐⭐⭐
+        // ⭐⭐⭐ دوال المزامنة السحابية ⭐⭐⭐
         // ============================================================
         function saveStateToCloud() {
+            if (!firebaseAvailable || !cloudDocRef) {
+                return Promise.resolve();
+            }
             try {
                 const plainData = JSON.parse(JSON.stringify(state));
-                const jsonStr = JSON.stringify(plainData);
-                lastSavedJson = jsonStr;
+                lastSavedJson = JSON.stringify(plainData);
                 return cloudDocRef.set(plainData).then(() => {
-                    console.log('✅ تم الحفظ في Firebase');
+                    console.log('✅ Saved to cloud');
                 }).catch((error) => {
-                    console.error('❌ خطأ في الحفظ:', error);
-                    showToast('⚠️ تعذر الحفظ في السحابة. تحقق من الإنترنت', 'warning');
+                    console.error('❌ Cloud save error:', error);
                 });
-            } catch(e) {
-                console.error('Cloud save error:', e);
+            } catch (e) {
+                console.error('Cloud save exception:', e);
+                return Promise.resolve();
             }
         }
 
         function loadStateFromCloud() {
-            return cloudDocRef.get().then((doc) => {
-                if (doc.exists) {
-                    const cloudData = doc.data();
-                    state = cloudData;
-                    ensureStateKeys();
-                    lastSavedJson = JSON.stringify(state);
-                    try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
-                    console.log('✅ تم تحميل البيانات من Firebase');
-                    return true;
-                } else {
-                    console.log('ℹ️ لا توجد بيانات سحابية، يتم إنشاء المستند الأول');
-                    return saveStateToCloud().then(() => false);
+            if (!firebaseAvailable || !cloudDocRef) {
+                console.warn('⚠️ Cloud unavailable - using local data');
+                return Promise.resolve(false);
+            }
+            return new Promise((resolve) => {
+                let resolved = false;
+                const timer = setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        console.warn('⏱️ Cloud load timeout');
+                        resolve(false);
+                    }
+                }, 5000);
+
+                try {
+                    cloudDocRef.get().then((doc) => {
+                        if (resolved) return;
+                        resolved = true;
+                        clearTimeout(timer);
+                        if (doc.exists) {
+                            state = doc.data();
+                            ensureStateKeys();
+                            lastSavedJson = JSON.stringify(state);
+                            try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
+                            console.log('✅ Data loaded from cloud');
+                            resolve(true);
+                        } else {
+                            console.log('ℹ️ No cloud data - creating initial doc');
+                            saveStateToCloud().finally(() => resolve(false));
+                        }
+                    }).catch((error) => {
+                        if (resolved) return;
+                        resolved = true;
+                        clearTimeout(timer);
+                        console.error('❌ Cloud load error:', error);
+                        resolve(false);
+                    });
+                } catch (e) {
+                    if (resolved) return;
+                    resolved = true;
+                    clearTimeout(timer);
+                    console.error('❌ Cloud exception:', e);
+                    resolve(false);
                 }
-            }).catch((error) => {
-                console.error('❌ خطأ في التحميل:', error);
-                showToast('⚠️ تعذر الاتصال بالسحابة. سيتم استخدام البيانات المحلية', 'warning');
-                return false;
             });
         }
 
-        // ⭐⭐⭐ المزامنة الفورية - Real-time Listener ⭐⭐⭐
         function setupRealtimeSync() {
+            if (!firebaseAvailable || !cloudDocRef) return;
             if (isRealtimeListenerActive) return;
-            isRealtimeListenerActive = true;
             
-            realtimeUnsubscribe = cloudDocRef.onSnapshot((doc) => {
-                if (!doc.exists) return;
-                const remoteData = doc.data();
-                if (!remoteData) return;
-                
-                const remoteJson = JSON.stringify(remoteData);
-                
-                // تجاهل إذا كان هذا نفس ما حفظناه للتو
-                if (lastSavedJson === remoteJson) return;
-                
-                // تجاهل إذا لم يتغير شيء
-                const localJson = JSON.stringify(state);
-                if (localJson === remoteJson) {
-                    lastSavedJson = remoteJson;
-                    return;
-                }
-                
-                console.log('🔄 تحديث من السحابة');
-                
-                // تطبيق التحديث مع debounce
-                if (remoteUpdateTimer) clearTimeout(remoteUpdateTimer);
-                remoteUpdateTimer = setTimeout(() => {
-                    applyRemoteUpdate(remoteData);
-                }, 100);
-            }, (error) => {
-                console.error('❌ Real-time sync error:', error);
+            try {
+                isRealtimeListenerActive = true;
+                realtimeUnsubscribe = cloudDocRef.onSnapshot((doc) => {
+                    realtimeRetryCount = 0;
+                    if (!doc.exists) return;
+                    const remoteData = doc.data();
+                    if (!remoteData) return;
+                    
+                    const remoteJson = JSON.stringify(remoteData);
+                    if (lastSavedJson === remoteJson) return;
+                    
+                    const localJson = JSON.stringify(state);
+                    if (localJson === remoteJson) {
+                        lastSavedJson = remoteJson;
+                        return;
+                    }
+                    
+                    console.log('🔄 Remote update received');
+                    if (remoteUpdateTimer) clearTimeout(remoteUpdateTimer);
+                    remoteUpdateTimer = setTimeout(() => applyRemoteUpdate(remoteData), 100);
+                }, (error) => {
+                    console.error('❌ Real-time sync error:', error);
+                    isRealtimeListenerActive = false;
+                    realtimeRetryCount++;
+                    if (realtimeRetryCount < 3) {
+                        setTimeout(() => setupRealtimeSync(), 15000);
+                    }
+                });
+            } catch (e) {
+                console.error('Failed to setup real-time sync:', e);
                 isRealtimeListenerActive = false;
-                // إعادة المحاولة بعد 5 ثواني
-                setTimeout(() => { setupRealtimeSync(); }, 5000);
-            });
+            }
         }
 
         function applyRemoteUpdate(remoteData) {
@@ -1026,31 +1076,23 @@
                 const oldSubUsername = state.subscription?.username;
                 const oldSubPassword = state.subscription?.password;
                 
-                // استبدال الحالة بالكامل
                 state = remoteData;
                 ensureStateKeys();
-                
-                // تحديث lastSavedJson لتفادي حلقة لا نهائية
                 lastSavedJson = JSON.stringify(state);
                 
                 try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
                 
                 const appEl = document.getElementById('app');
                 const adminEl = document.getElementById('adminPanel');
-                const loginEl = document.getElementById('loginScreen');
                 
-                // إذا كانت لوحة المدير مفتوحة، حدّثها
                 if (adminEl && adminEl.classList.contains('active')) {
-                    try { renderAdminPanel(); } catch(e) { console.error('renderAdminPanel error:', e); }
+                    try { renderAdminPanel(); } catch(e) { console.error(e); }
                     showToast('🔄 تم تحديث البيانات تلقائياً', 'info');
                 }
                 
-                // إذا كان التطبيق مفتوحاً، حدّثه
                 if (appEl && appEl.classList.contains('active')) {
-                    try { renderAll(); } catch(e) { console.error('renderAll error:', e); }
-                    try { updateSubscriptionUI(); } catch(e) {}
+                    try { renderAll(); } catch(e) { console.error(e); }
                     
-                    // تحديث حقول البيانات الشخصية إذا تغيرت من الخارج
                     if (oldSubUsername !== state.subscription.username || oldSubPassword !== state.subscription.password) {
                         const su = document.getElementById('settingsUsername');
                         if (su) su.value = state.subscription.username || '';
@@ -1058,26 +1100,12 @@
                         if (sp) sp.value = state.subscription.password || '';
                     }
                     
-                    // تحديث شاشة الإعدادات إذا كانت مفتوحة
-                    if (document.getElementById('settings')?.classList.contains('active')) {
-                        const su = document.getElementById('settingsUsername');
-                        if (su) su.value = state.subscription.username || '';
-                        const sp = document.getElementById('settingsPassword');
-                        if (sp) sp.value = state.subscription.password || '';
-                    }
-                    
                     showToast('🔄 تم تحديث البيانات تلقائياً', 'info');
-                }
-                
-                // إذا كان المستخدم على شاشة تسجيل الدخول، فقط تحديث المتغيرات (لا حاجة لإعادة الرسم)
-                if (loginEl && loginEl.classList.contains('active')) {
-                    console.log('📝 تحديث بيانات الاعتماد المتاحة');
                 }
             } catch(e) {
                 console.error('applyRemoteUpdate error:', e);
             }
         }
-
         // ============================================================
 
         function saveState() {
@@ -1137,7 +1165,6 @@
             else { input.type = 'password'; eye.className = 'fa-solid fa-eye'; }
         }
 
-        // ⭐⭐⭐ نظام المزود ⭐⭐⭐
         function showMasterLogin() {
             document.getElementById('masterPassword').value = '';
             document.getElementById('masterLoginError').classList.add('hidden');
@@ -1325,7 +1352,6 @@
             }).join('');
         }
 
-        // ⭐⭐⭐ إضافة/تعديل مشترك مع مزامنة ثنائية للبيانات ⭐⭐⭐
         function openAddClientModal() {
             editingClientId = null;
             document.getElementById('clientModalTitle').innerText = 'إضافة مشترك جديد';
@@ -1379,7 +1405,6 @@
                 return;
             }
 
-            // نحفظ اسم المستخدم القديم قبل التعديل للمزامنة
             const oldClient = editingClientId ? state.adminClients.find(c => c.id === editingClientId) : null;
             const oldClientUsername = oldClient ? oldClient.username : null;
 
@@ -1401,13 +1426,11 @@
                 showToast(`✅ تم إضافة المشترك "${name}"`, 'success');
             }
 
-            // ⭐ مزامنة مع الاشتراك الحالي للعميل إذا كان مرتبطاً
             const savedClient = editingClientId 
                 ? state.adminClients.find(c => c.id === editingClientId)
                 : state.adminClients[state.adminClients.length - 1];
 
             if (savedClient && state.subscription) {
-                // نتحقق إذا كان هذا العميل مرتبطاً بالاشتراك الحالي
                 const isLinked = 
                     (oldClientUsername && state.subscription.username === oldClientUsername) ||
                     (state.subscription.username === savedClient.username);
@@ -1417,7 +1440,7 @@
                     state.subscription.password = savedClient.password;
                     state.subscription.startDate = savedClient.startDate;
                     state.subscription.endDate = savedClient.endDate;
-                    console.log('🔄 تم مزامنة الاشتراك مع المشترك:', savedClient.name);
+                    console.log('🔄 Synced subscription with client:', savedClient.name);
                 }
             }
 
@@ -1454,7 +1477,6 @@
             startFrom.setDate(startFrom.getDate() + numDays);
             client.endDate = startFrom.toISOString().slice(0, 10);
 
-            // ⭐ مزامنة مع الاشتراك إذا كان مرتبطاً
             if (state.subscription && state.subscription.username === client.username) {
                 state.subscription.endDate = client.endDate;
             }
@@ -1475,7 +1497,6 @@
             });
         }
 
-        // ⭐⭐⭐ نظام الاشتراك ⭐⭐⭐
         function isSubscriptionActive() {
             if (!state.subscription || !state.subscription.endDate) return true;
             const endDate = new Date(state.subscription.endDate + 'T23:59:59');
@@ -1571,12 +1592,11 @@
             state.subscription.endDate = newEnd;
             state.subscription.providerPhone = provPhone;
 
-            // ⭐ مزامنة مع المشترك المرتبط في لوحة المدير
             if (state.adminClients) {
                 const linkedClient = state.adminClients.find(c => c.username === oldUsername);
                 if (linkedClient) {
                     linkedClient.endDate = newEnd;
-                    console.log('🔄 تم مزامنة المشترك مع الاشتراك:', linkedClient.name);
+                    console.log('🔄 Synced client with subscription:', linkedClient.name);
                 }
             }
 
@@ -1587,7 +1607,6 @@
             showToast(`✅ تم تجديد الاشتراك حتى ${newEnd}`, 'success');
         }
 
-        // ⭐⭐⭐ تحديث بيانات الدخول مع مزامنة لوحة المدير ⭐⭐⭐
         function updateCredentials() {
             const newUsername = document.getElementById('settingsUsername').value.trim();
             const newPassword = document.getElementById('settingsPassword').value.trim();
@@ -1598,13 +1617,12 @@
             state.subscription.username = newUsername;
             state.subscription.password = newPassword;
 
-            // ⭐ مزامنة مع المشترك المرتبط في لوحة المدير
             if (state.adminClients) {
                 const linkedClient = state.adminClients.find(c => c.username === oldUsername);
                 if (linkedClient) {
                     linkedClient.username = newUsername;
                     linkedClient.password = newPassword;
-                    console.log('🔄 تم مزامنة بيانات الدخول مع المشترك:', linkedClient.name);
+                    console.log('🔄 Synced credentials with client:', linkedClient.name);
                 }
             }
 
@@ -1632,39 +1650,72 @@
             renderAll();
         }
 
+        // ⭐⭐⭐ دالة عرض الشاشة الأولية - محصنة ضد الأخطاء
+        function showInitialScreen() {
+            try {
+                if (sessionStorage.getItem('alhasan_master_logged_in') === 'true') {
+                    document.getElementById('adminPanel').classList.add('active');
+                    try { renderAdminPanel(); } catch(e) { console.error('renderAdminPanel:', e); }
+                } else if (sessionStorage.getItem('alhasan_logged_in') === 'true') {
+                    try { startApp(); } catch(e) { console.error('startApp:', e); }
+                } else {
+                    document.getElementById('loginScreen').classList.add('active');
+                    setTimeout(() => {
+                        const el = document.getElementById('loginUsername');
+                        if (el) el.focus();
+                    }, 300);
+                }
+            } catch(e) {
+                console.error('showInitialScreen error:', e);
+                // محاولة أخيرة: عرض شاشة الدخول
+                try {
+                    document.getElementById('loginScreen').classList.add('active');
+                } catch(e2) {}
+            }
+        }
+
+        // ⭐⭐⭐ دالة موحدة لإخفاء شاشة التحميل
+        function hideSplashAndShow() {
+            const splash = document.getElementById('splash-screen');
+            if (!splash) {
+                showInitialScreen();
+                return;
+            }
+            if (splash.dataset.hidden === 'true') return;
+            splash.dataset.hidden = 'true';
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                showInitialScreen();
+            }, 500);
+        }
+
         window.addEventListener('load', () => {
+            // ⭐ حماية إجبارية: إخفاء شاشة التحميل بعد 8 ثواني مهما حدث
+            const forceHideTimer = setTimeout(() => {
+                console.warn('⏱️ Force hide splash after 8s');
+                hideSplashAndShow();
+            }, 8000);
+
             setTimeout(async () => {
-                const splash = document.getElementById('splash-screen');
                 const splashStatus = document.getElementById('splashStatus');
-                if (splashStatus) splashStatus.innerText = 'جاري الاتصال بالسحابة...';
 
                 try {
+                    if (splashStatus) splashStatus.innerText = 'جاري الاتصال بالسحابة...';
                     await loadStateFromCloud();
-                } catch(e) {
+                } catch (e) {
                     console.error('Cloud load failed:', e);
                 }
 
-                // ⭐ تفعيل المزامنة الفورية
-                setupRealtimeSync();
-                console.log('🔄 تم تفعيل المزامنة الفورية');
-
-                if (splashStatus) splashStatus.innerText = 'جاري تحميل النظام...';
-
-                if (splash) {
-                    splash.style.opacity = '0';
-                    setTimeout(() => {
-                        splash.style.display = 'none';
-                        if (sessionStorage.getItem('alhasan_master_logged_in') === 'true') {
-                            document.getElementById('adminPanel').classList.add('active');
-                            renderAdminPanel();
-                        } else if (sessionStorage.getItem('alhasan_logged_in') === 'true') {
-                            startApp();
-                        } else {
-                            document.getElementById('loginScreen').classList.add('active');
-                            setTimeout(() => document.getElementById('loginUsername').focus(), 300);
-                        }
-                    }, 500);
+                try {
+                    setupRealtimeSync();
+                } catch (e) {
+                    console.error('Realtime setup error:', e);
                 }
+
+                clearTimeout(forceHideTimer);
+                if (splashStatus) splashStatus.innerText = 'جاري تحميل النظام...';
+                hideSplashAndShow();
             }, 1500);
         });
 
