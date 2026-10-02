@@ -73,6 +73,14 @@
             min-height: 3.6rem;
             line-height: 1.35;
         }
+        /* ⭐ على اللابتوب: تصغير كروت المخزون لتطابق حجم كروت نقطة البيع ⭐ */
+        @media (min-width: 1024px) {
+            .product-card .product-name {
+                font-size: 0.875rem;
+                min-height: 2.4rem;
+                line-height: 1.35;
+            }
+        }
         @media (max-width: 1023px) {
             html, body { overflow-x: hidden !important; max-width: 100vw !important; width: 100% !important; }
             body { overflow: hidden !important; }
@@ -353,7 +361,7 @@
                         <div class="relative flex-1"><i class="fa-solid fa-search absolute right-4 top-3.5 text-slate-500"></i><input type="text" id="inventorySearch" placeholder="ابحث..." class="w-full bg-navy-800 border border-navy-700 rounded-xl py-3 pr-12 pl-4 text-white focus:border-gold-400 outline-none" oninput="renderInventory(this.value)"></div>
                         <select id="inventoryCategoryFilter" class="bg-navy-800 border border-navy-700 rounded-xl px-4 py-3 text-white focus:border-gold-400 outline-none" onchange="renderInventory()"><option value="all">كل التصنيفات</option></select>
                     </div>
-                    <div id="inventoryListContainer" class="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                    <div id="inventoryListContainer" class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-3"></div>
                 </div>
                 <div id="invoices" class="page">
                     <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
@@ -741,7 +749,6 @@
 
         const MASTER_KEY = 'ALHASAN-MASTER-2026';
 
-        // ⭐⭐⭐ دوال تخزين صور المنتجات (سحابياً + كاش محلي) ⭐⭐⭐
         const IMG_KEY_PREFIX = 'alhasan_img_';
         let pendingProductImage = undefined;
 
@@ -916,7 +923,6 @@
                 showToast('⚠️ فشل تحميل الباركود', 'warning');
             }
         }
-        // ==================================================
 
         function showToast(message, type = 'success') {
             try {
@@ -1983,34 +1989,34 @@
                 container.className = 'bg-navy-800 rounded-2xl border border-navy-700 overflow-hidden shadow-xl';
                 container.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-slate-500"><i class="fa-solid fa-box-open text-6xl mb-4 opacity-50"></i><p class="text-lg">لا توجد منتجات</p></div>`;
             } else {
-                container.className = 'grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6';
+                container.className = 'grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-3';
                 container.innerHTML = filtered.map(p => {
                     const img = getProductImage(p.id);
                     const imageHtml = img
                         ? `<img src="${img}" class="w-full h-full object-cover" alt="${p.name}" loading="lazy">`
-                        : `<div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-box text-slate-600 text-3xl"></i></div>`;
+                        : `<div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-box text-slate-600 text-3xl lg:text-2xl"></i></div>`;
                     return `
-                    <div class="product-card bg-navy-800 rounded-2xl p-5 border border-navy-700 shadow-lg flex flex-col gap-4 relative">
-                        <div class="product-qty-badge absolute top-4 left-4 w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm z-10">${p.qty}</div>
-                        <div class="text-right mt-1">
-                            <h3 class="product-name text-xl font-bold text-white mb-1">${p.name}</h3>
-                            <p class="product-barcode-text text-xs text-slate-400 truncate">باركود: ${p.barcode}</p>
+                    <div class="product-card bg-navy-800 rounded-2xl p-5 lg:p-3 border border-navy-700 shadow-lg flex flex-col gap-4 lg:gap-2 relative">
+                        <div class="product-qty-badge absolute top-4 lg:top-2 left-4 lg:left-2 w-8 h-8 lg:w-6 lg:h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm lg:text-[10px] z-10">${p.qty}</div>
+                        <div class="text-right mt-1 lg:mt-0">
+                            <h3 class="product-name text-xl font-bold text-white mb-1 lg:mb-0.5">${p.name}</h3>
+                            <p class="product-barcode-text text-xs lg:text-[10px] text-slate-400 truncate">باركود: ${p.barcode}</p>
                         </div>
-                        <div class="product-image-container relative bg-navy-900 rounded-xl flex items-center justify-center aspect-square overflow-hidden border border-navy-700">
+                        <div class="product-image-container relative bg-navy-900 rounded-xl lg:rounded-lg flex items-center justify-center aspect-square overflow-hidden border border-navy-700">
                             ${imageHtml}
-                            <button type="button" onclick="event.stopPropagation(); showBarcodeModal('${p.barcode}', '${(p.name || '').replace(/'/g, "\\'")}')" class="barcode-btn absolute bottom-1 left-1 w-7 h-7 rounded-lg bg-gold-500/95 hover:bg-gold-500 text-navy-900 flex items-center justify-center shadow-lg z-10" title="عرض / تحميل الباركود"><i class="fa-solid fa-barcode text-xs"></i></button>
+                            <button type="button" onclick="event.stopPropagation(); showBarcodeModal('${p.barcode}', '${(p.name || '').replace(/'/g, "\\'")}')" class="barcode-btn absolute bottom-1 left-1 w-7 h-7 lg:w-6 lg:h-6 rounded-lg lg:rounded-md bg-gold-500/95 hover:bg-gold-500 text-navy-900 flex items-center justify-center shadow-lg z-10" title="عرض / تحميل الباركود"><i class="fa-solid fa-barcode text-xs lg:text-[10px]"></i></button>
                         </div>
-                        <div class="price-grid grid grid-cols-3 gap-2 text-center text-sm">
-                            <div class="price-box bg-navy-900 rounded-xl p-3 border border-navy-700"><span class="price-label text-slate-400 text-xs mb-1 block">التكلفة</span><span class="price-value text-white font-bold">${formatMoney(p.cost)}</span></div>
-                            <div class="price-box bg-navy-900 rounded-xl p-3 border border-navy-700"><span class="price-label text-slate-400 text-xs mb-1 block">مفرد</span><span class="price-value text-gold-400 font-bold">${formatMoney(p.retailPrice)}</span></div>
-                            <div class="price-box bg-navy-900 rounded-xl p-3 border border-navy-700"><span class="price-label text-slate-400 text-xs mb-1 block">جملة</span><span class="price-value text-purple-400 font-bold">${formatMoney(p.wholesalePrice)}</span></div>
+                        <div class="price-grid grid grid-cols-3 gap-2 lg:gap-1 text-center">
+                            <div class="price-box bg-navy-900 rounded-xl lg:rounded-lg p-3 lg:p-1.5 border border-navy-700 min-w-0 overflow-hidden"><span class="price-label text-slate-400 text-xs lg:text-[9px] mb-1 lg:mb-0.5 block leading-none">التكلفة</span><span class="price-value text-white font-bold lg:text-xs break-all">${formatMoney(p.cost)}</span></div>
+                            <div class="price-box bg-navy-900 rounded-xl lg:rounded-lg p-3 lg:p-1.5 border border-navy-700 min-w-0 overflow-hidden"><span class="price-label text-slate-400 text-xs lg:text-[9px] mb-1 lg:mb-0.5 block leading-none">مفرد</span><span class="price-value text-gold-400 font-bold lg:text-xs break-all">${formatMoney(p.retailPrice)}</span></div>
+                            <div class="price-box bg-navy-900 rounded-xl lg:rounded-lg p-3 lg:p-1.5 border border-navy-700 min-w-0 overflow-hidden"><span class="price-label text-slate-400 text-xs lg:text-[9px] mb-1 lg:mb-0.5 block leading-none">جملة</span><span class="price-value text-purple-400 font-bold lg:text-xs break-all">${formatMoney(p.wholesalePrice)}</span></div>
                         </div>
-                        <div class="card-actions flex justify-between items-center pt-3 border-t border-navy-700 mt-auto">
-                            <div class="flex gap-2">
-                                <button onclick="deleteProduct(${p.id})" class="action-btn w-10 h-10 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
-                                <button onclick="editProduct(${p.id})" class="action-btn w-10 h-10 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-pen"></i></button>
+                        <div class="card-actions flex justify-between items-center pt-3 lg:pt-2 border-t border-navy-700 mt-auto">
+                            <div class="flex gap-2 lg:gap-1">
+                                <button onclick="deleteProduct(${p.id})" class="action-btn w-10 h-10 lg:w-7 lg:h-7 rounded-lg lg:rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash lg:text-xs"></i></button>
+                                <button onclick="editProduct(${p.id})" class="action-btn w-10 h-10 lg:w-7 lg:h-7 rounded-lg lg:rounded-md bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-pen lg:text-xs"></i></button>
                             </div>
-                            <div class="unit-qty text-emerald-400 font-bold text-sm">${p.unit || 'قطعة'} ${p.qty}</div>
+                            <div class="unit-qty text-emerald-400 font-bold text-sm lg:text-[10px]">${p.unit || 'قطعة'} ${p.qty}</div>
                         </div>
                     </div>
                     `;
