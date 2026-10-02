@@ -99,6 +99,54 @@
         .notif-item { transition: all 0.2s; }
         .notif-item:hover { background-color: rgba(30, 41, 59, 0.7); }
         .notif-item.unread { background-color: rgba(30, 41, 59, 0.4); }
+
+        /* ⭐⭐⭐ حماية مطلقة: إخفاء زر حذف الإشعارات عن العميل ⭐⭐⭐ */
+        body.client-mode #clearAllNotifBtn,
+        body.client-mode #clearAllNotifBtn * {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
+        }
+        /* ⭐⭐⭐ */
+
+        /* ⭐⭐⭐ شعار التطبيق في بطاقة المعلومات ⭐⭐⭐ */
+        .app-logo-glow {
+            position: relative;
+        }
+        .app-logo-glow::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            background: radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(250, 204, 21, 0) 70%);
+            border-radius: 24px;
+            z-index: 0;
+        }
+        .app-logo-box {
+            position: relative;
+            z-index: 1;
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #fde047 0%, #eab308 50%, #ca8a04 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(234, 179, 8, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        .app-logo-letter {
+            font-family: 'Cairo', sans-serif;
+            font-weight: 900;
+            font-size: 38px;
+            color: #0a1120;
+            line-height: 1;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -229,7 +277,6 @@
                 </div>
             </header>
 
-            <!-- ⭐ قائمة الإشعارات المنسدلة ⭐ -->
             <div id="notificationsDropdown" class="fixed top-20 left-2 right-2 md:left-4 md:right-auto md:w-96 max-h-[70vh] bg-navy-800 border border-navy-700 rounded-2xl shadow-2xl z-[300] flex-col overflow-hidden">
                 <div class="flex items-center justify-between p-4 border-b border-navy-700 bg-navy-900/70">
                     <h3 class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-bell text-gold-400"></i> الإشعارات</h3>
@@ -438,11 +485,34 @@
                         </div>
                         <button onclick="updateCredentials()" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-save"></i> تحديث بيانات الدخول</button>
                     </div>
-                    <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-10">
+                    <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-6">
                         <button onclick="saveSettings(); showToast('تم الحفظ', 'success');" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-6 py-3 rounded-xl shadow-lg flex items-center gap-2"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات</button>
                         <button onclick="resetData()" class="bg-red-900/80 hover:bg-red-800 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> إعادة ضبط البيانات</button>
                         <button onclick="deleteAllData()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-trash"></i> حذف جميع البيانات</button>
                     </div>
+
+                    <!-- ⭐⭐⭐ بطاقة معلومات التطبيق (في نهاية الإعدادات) ⭐⭐⭐ -->
+                    <div class="bg-navy-800 p-6 rounded-2xl border border-navy-700 shadow-xl mb-10">
+                        <div class="flex flex-col items-center justify-center py-6">
+                            <!-- شعار التطبيق -->
+                            <div class="app-logo-glow mb-5">
+                                <div class="app-logo-box">
+                                    <span class="app-logo-letter">ح</span>
+                                </div>
+                            </div>
+                            <!-- اسم التطبيق -->
+                            <h3 class="text-2xl md:text-3xl font-bold text-gold-400 mb-2">الحسن للمحاسبة</h3>
+                            <!-- الوصف -->
+                            <p class="text-slate-400 text-sm md:text-base mb-6 text-center">نظام محاسبة متكامل للمبيعات والمخزون</p>
+                            <!-- الإصدار والحقوق -->
+                            <div class="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-slate-500 flex-wrap justify-center">
+                                <span>الإصدار 2.0.0</span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+                                <span>© 2026 جميع الحقوق محفوظة</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ⭐⭐⭐ نهاية بطاقة معلومات التطبيق ⭐⭐⭐ -->
                 </div>
             </div>
         </main>
@@ -745,6 +815,27 @@
             info: { icon: 'fa-info-circle', color: 'text-blue-400 bg-blue-500/20', title: 'معلومة' }
         };
 
+        function enforceNotificationPermissions() {
+            const clearBtn = document.getElementById('clearAllNotifBtn');
+            if (!clearBtn) return;
+            
+            if (isClientUser()) {
+                document.body.classList.add('client-mode');
+                clearBtn.style.display = 'none';
+                clearBtn.style.visibility = 'hidden';
+                clearBtn.style.pointerEvents = 'none';
+                clearBtn.setAttribute('aria-hidden', 'true');
+                clearBtn.setAttribute('data-client-hidden', 'true');
+            } else {
+                document.body.classList.remove('client-mode');
+                clearBtn.style.display = '';
+                clearBtn.style.visibility = '';
+                clearBtn.style.pointerEvents = '';
+                clearBtn.removeAttribute('aria-hidden');
+                clearBtn.removeAttribute('data-client-hidden');
+            }
+        }
+
         function addNotification(type, message, options = {}) {
             if (!Array.isArray(state.notifications)) state.notifications = [];
             
@@ -778,15 +869,7 @@
         function renderNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
             
-            // ⭐ إخفاء زر الحذف للعميل
-            const clearBtn = document.getElementById('clearAllNotifBtn');
-            if (clearBtn) {
-                if (isClientUser()) {
-                    clearBtn.style.display = 'none';
-                } else {
-                    clearBtn.style.display = '';
-                }
-            }
+            enforceNotificationPermissions();
             
             const unreadCount = state.notifications.filter(n => !n.read).length;
             const badge = document.getElementById('notifBadge');
@@ -840,6 +923,7 @@
             if (event) event.stopPropagation();
             const dropdown = document.getElementById('notificationsDropdown');
             if (!dropdown) return;
+            enforceNotificationPermissions();
             dropdown.classList.toggle('open');
         }
 
@@ -866,9 +950,12 @@
             }
         }
 
-        // ⭐⭐⭐ الحماية: منع العميل من حذف الإشعارات ⭐⭐⭐
         function clearAllNotifications() {
             if (isClientUser()) {
+                showToast('⚠️ غير مصرح لك بحذف الإشعارات', 'warning');
+                return;
+            }
+            if (document.body.classList.contains('client-mode')) {
                 showToast('⚠️ غير مصرح لك بحذف الإشعارات', 'warning');
                 return;
             }
@@ -889,6 +976,20 @@
             if (dropdown.contains(e.target) || (bell && bell.contains(e.target))) return;
             dropdown.classList.remove('open');
         });
+
+        setInterval(function() {
+            if (isClientUser()) {
+                const clearBtn = document.getElementById('clearAllNotifBtn');
+                if (clearBtn && clearBtn.style.display !== 'none') {
+                    clearBtn.style.display = 'none';
+                    clearBtn.style.visibility = 'hidden';
+                    clearBtn.style.pointerEvents = 'none';
+                }
+                if (!document.body.classList.contains('client-mode')) {
+                    document.body.classList.add('client-mode');
+                }
+            }
+        }, 500);
 
         function generateAutoNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
@@ -1053,17 +1154,6 @@
             
             if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
             
-            if (username === state.subscription.username && password === state.subscription.password) {
-                sessionStorage.setItem('alhasan_logged_in', 'true');
-                sessionStorage.setItem('alhasan_user_type', 'admin');
-                sessionStorage.setItem('alhasan_client_username', username);
-                errorBox.classList.add('hidden');
-                document.getElementById('loginScreen').classList.remove('active');
-                document.getElementById('loginPassword').value = '';
-                startApp();
-                return;
-            }
-            
             const clients = Array.isArray(state.adminClients) ? state.adminClients : [];
             const client = clients.find(c => (c.username || 'admin') === username && (c.password || 'admin123') === password);
             
@@ -1084,6 +1174,14 @@
                 sessionStorage.setItem('alhasan_client_db_key', encodedUsername);
                 sessionStorage.setItem('alhasan_client_id', client.id);
                 
+                document.body.classList.add('client-mode');
+                const clearBtn = document.getElementById('clearAllNotifBtn');
+                if (clearBtn) {
+                    clearBtn.style.display = 'none';
+                    clearBtn.style.visibility = 'hidden';
+                    clearBtn.style.pointerEvents = 'none';
+                }
+                
                 await loadClientData(encodedUsername);
                 
                 state.subscription = { startDate: client.startDate, endDate: client.endDate, username: client.username, password: client.password, providerPhone: state.subscription.providerPhone || '' };
@@ -1103,6 +1201,26 @@
                 return;
             }
             
+            if (username === state.subscription.username && password === state.subscription.password) {
+                sessionStorage.setItem('alhasan_logged_in', 'true');
+                sessionStorage.setItem('alhasan_user_type', 'admin');
+                sessionStorage.setItem('alhasan_client_username', username);
+                
+                document.body.classList.remove('client-mode');
+                const clearBtn = document.getElementById('clearAllNotifBtn');
+                if (clearBtn) {
+                    clearBtn.style.display = '';
+                    clearBtn.style.visibility = '';
+                    clearBtn.style.pointerEvents = '';
+                }
+                
+                errorBox.classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('loginPassword').value = '';
+                startApp();
+                return;
+            }
+            
             errorBox.classList.remove('hidden');
             errorText.innerText = 'اسم المستخدم أو كلمة المرور غير صحيحة';
             showToast('❌ بيانات الدخول غير صحيحة', 'warning');
@@ -1110,6 +1228,7 @@
 
         function logout() {
             if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+                document.body.classList.remove('client-mode');
                 sessionStorage.removeItem('alhasan_logged_in');
                 sessionStorage.removeItem('alhasan_user_type');
                 sessionStorage.removeItem('alhasan_client_username');
@@ -1454,6 +1573,14 @@
 
         function startApp() {
             document.getElementById('app').classList.add('active');
+            
+            if (isClientUser()) {
+                document.body.classList.add('client-mode');
+            } else {
+                document.body.classList.remove('client-mode');
+            }
+            enforceNotificationPermissions();
+            
             document.getElementById('topExchangeRate').value = state.settings.exchangeRate;
             document.getElementById('settingsNewSYP').value = state.settings.exchangeRate;
             document.getElementById('settingsOldSYP').value = state.settings.oldExchangeRate;
@@ -1470,6 +1597,8 @@
             document.getElementById('dashLastUpdate').innerText = todayDate;
             updateSubscriptionUI();
             renderAll();
+            setTimeout(() => { enforceNotificationPermissions(); }, 100);
+            setTimeout(() => { enforceNotificationPermissions(); }, 500);
             setTimeout(() => { try { generateAutoNotifications(); } catch(e) { console.error('Notification error:', e); } }, 800);
         }
 
@@ -1511,6 +1640,7 @@
             try { updateCartUI(); } catch(e) {}
             try { updateSubscriptionUI(); } catch(e) {}
             try { renderNotifications(); } catch(e) {}
+            try { enforceNotificationPermissions(); } catch(e) {}
         }
 
         function switchPage(pageId, element) {
