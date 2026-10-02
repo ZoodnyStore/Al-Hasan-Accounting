@@ -94,7 +94,6 @@
             #cartItems { max-height: 250px !important; }
             .toast-notification { min-width: auto !important; padding: 12px 16px !important; font-size: 12px !important; }
 
-            /* ⭐ إصلاح بطاقات المنتجات في المخزون على الجوال ⭐ */
             #inventoryListContainer > .product-card { padding: 8px !important; gap: 6px !important; border-radius: 12px !important; }
             #inventoryListContainer > .product-card .product-qty-badge { width: 22px !important; height: 22px !important; font-size: 10px !important; border-radius: 6px !important; top: 6px !important; left: 6px !important; }
             #inventoryListContainer > .product-card .product-name { font-size: 0.8rem !important; line-height: 1.2 !important; margin-bottom: 2px !important; padding-left: 26px; word-break: break-word; }
@@ -485,11 +484,10 @@
             <div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold text-white" id="productModalTitle">إضافة منتج جديد</h3><button onclick="closeProductModal()" class="text-slate-400 hover:text-white text-2xl">&times;</button></div>
             <div class="space-y-5">
 
-                <!-- ⭐ صورة المنتج ⭐ -->
                 <div class="bg-navy-900 p-4 rounded-xl border border-navy-700">
                     <div class="flex justify-between items-center mb-3">
                         <label class="text-slate-300 font-semibold"><i class="fa-solid fa-image text-gold-400 ml-1"></i> صورة المنتج (اختياري)</label>
-                        <span class="text-[10px] text-slate-500">تُخزَّن محلياً على جهازك فقط</span>
+                        <span class="text-[10px] text-slate-500">تُحفظ في حسابك السحابي ☁️</span>
                     </div>
                     <div class="flex items-center gap-4">
                         <div id="prodImagePreview" class="w-24 h-24 rounded-xl bg-navy-800 border-2 border-dashed border-navy-600 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -528,7 +526,6 @@
         </div>
     </div>
 
-    <!-- ⭐ نافذة عرض/تحميل الباركود ⭐ -->
     <div id="barcodeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[10000] backdrop-blur-sm p-4">
         <div class="bg-navy-800 p-6 rounded-2xl w-full max-w-md border-2 border-gold-500 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
@@ -735,39 +732,50 @@
 
         const MASTER_KEY = 'ALHASAN-MASTER-2026';
 
-        // ⭐⭐⭐ دوال تخزين صور المنتجات (محلي فقط) ⭐⭐⭐
+        // ⭐⭐⭐ دوال تخزين صور المنتجات (سحابياً + كاش محلي) ⭐⭐⭐
         const IMG_KEY_PREFIX = 'alhasan_img_';
         let pendingProductImage = undefined; // undefined = لا تغيير | null = حذف | string = صورة جديدة
 
+        // ⭐ حد أقصى لحجم الصورة في السحابة (~700KB بعد base64) ⭐
+        const MAX_CLOUD_IMAGE_SIZE = 700000;
+
         function getProductImage(id) {
+            // 1) من البيانات السحابية (state.productImages)
+            if (state && state.productImages && state.productImages[id]) {
+                return state.productImages[id];
+            }
+            // 2) احتياطي: من التخزين المحلي (كاش)
             try { return localStorage.getItem(IMG_KEY_PREFIX + id) || null; } catch(e) { return null; }
         }
 
         function setProductImage(id, dataUrl) {
-            try {
-                if (dataUrl) {
-                    localStorage.setItem(IMG_KEY_PREFIX + id, dataUrl);
-                } else {
-                    localStorage.removeItem(IMG_KEY_PREFIX + id);
+            if (!state.productImages || typeof state.productImages !== 'object') state.productImages = {};
+            if (dataUrl) {
+                // فحص الحجم قبل الحفظ السحابي
+                if (dataUrl.length > MAX_CLOUD_IMAGE_SIZE) {
+                    showToast('⚠️ الصورة كبيرة جداً على السحابة، اختر صورة أصغر', 'warning');
+                    return false;
                 }
-                return true;
-            } catch(e) {
-                console.error('Image save error:', e);
-                if (e.name === 'QuotaExceededError' || e.code === 22) {
-                    showToast('⚠️ مساحة التخزين ممتلئة! احذف بعض الصور القديمة', 'warning');
-                } else {
-                    showToast('⚠️ فشل تخزين الصورة', 'warning');
-                }
-                return false;
+                // الحفظ في state (سيرفع لـ Firebase مع saveState)
+                state.productImages[id] = dataUrl;
+                // كاش محلي (اختياري، لتسريع العرض إن كان متاحاً)
+                try { localStorage.setItem(IMG_KEY_PREFIX + id, dataUrl); } catch(e) {}
+            } else {
+                delete state.productImages[id];
+                try { localStorage.removeItem(IMG_KEY_PREFIX + id); } catch(e) {}
             }
+            return true;
         }
 
         function removeProductImage(id) {
+            if (state && state.productImages && state.productImages[id]) {
+                delete state.productImages[id];
+            }
             try { localStorage.removeItem(IMG_KEY_PREFIX + id); } catch(e) {}
         }
 
-        // ⭐ ضغط الصورة قبل التخزين (لتوفير المساحة) ⭐
-        function compressImage(file, maxSize = 600, quality = 0.8) {
+        // ⭐ ضغط الصورة قبل التخزين (لتوفير المساحة في السحابة) ⭐
+        function compressImage(file, maxSize = 500, quality = 0.75) {
             return new Promise((resolve, reject) => {
                 if (!file.type.startsWith('image/')) { reject(new Error('ليس ملف صورة')); return; }
                 const reader = new FileReader();
@@ -808,11 +816,16 @@
             }
             try {
                 showToast('⏳ جاري معالجة الصورة...', 'info');
-                const compressed = await compressImage(file, 600, 0.8);
+                const compressed = await compressImage(file, 500, 0.75);
+                if (compressed.length > MAX_CLOUD_IMAGE_SIZE) {
+                    showToast('⚠️ الصورة كبيرة جداً بعد الضغط، اختر صورة أبسط', 'warning');
+                    event.target.value = '';
+                    return;
+                }
                 pendingProductImage = compressed;
                 const preview = document.getElementById('prodImagePreview');
                 preview.innerHTML = `<img src="${compressed}" class="w-full h-full object-cover" alt="preview">`;
-                showToast('✅ تم رفع الصورة', 'success');
+                showToast('✅ تم رفع الصورة (ستُحفظ في حسابك السحابي)', 'success');
             } catch(err) {
                 console.error(err);
                 showToast('⚠️ ' + (err.message || 'فشل معالجة الصورة'), 'warning');
@@ -878,7 +891,6 @@
                     background: '#ffffff',
                     lineColor: '#000000'
                 });
-                // Add padding
                 const padding = 30;
                 const finalCanvas = document.createElement('canvas');
                 finalCanvas.width = canvas.width + padding * 2;
@@ -934,6 +946,7 @@
             settings: { exchangeRate: 14500, oldExchangeRate: 1400000, wholesaleDiscount: 10, isWholesale: false, activePosCategory: 'all', storeName: "الحسن للمحاسبة", phone: "+963 11 000 0000", address: "سوريا - دمشق", taxRate: 0 },
             subscription: { startDate: new Date().toISOString().slice(0, 10), endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), username: 'admin', password: 'admin123', providerPhone: '+963 11 000 0000' },
             adminClients: [], products: [], customers: [], expenses: [], invoices: [], cart: [],
+            productImages: {},
             notifications: []
         };
         function getFreshDefault() { return JSON.parse(JSON.stringify(defaultState)); }
@@ -959,6 +972,8 @@
         if (!Array.isArray(state.expenses)) state.expenses = [];
         if (!Array.isArray(state.invoices)) state.invoices = [];
         if (!Array.isArray(state.cart)) state.cart = [];
+        // ⭐ ضمان وجود productImages ⭐
+        if (!state.productImages || typeof state.productImages !== 'object' || Array.isArray(state.productImages)) state.productImages = {};
         if (!state.subscription.username) state.subscription.username = 'admin';
         if (!state.subscription.password) state.subscription.password = 'admin123';
         if (!state.subscription.endDate) state.subscription.endDate = defaultState.subscription.endDate;
@@ -1136,6 +1151,7 @@
                     if (!state.subscription || typeof state.subscription !== 'object') state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
                     if (!state.settings || typeof state.settings !== 'object') state.settings = JSON.parse(JSON.stringify(defaultState.settings));
                     if (!Array.isArray(state.adminClients)) state.adminClients = [];
+                    if (!state.productImages || typeof state.productImages !== 'object' || Array.isArray(state.productImages)) state.productImages = {};
                     if (!state.subscription.username) state.subscription.username = 'admin';
                     if (!state.subscription.password) state.subscription.password = 'admin123';
                     if (!state.subscription.endDate) state.subscription.endDate = defaultState.subscription.endDate;
@@ -1165,6 +1181,7 @@
                     if (!Array.isArray(state.invoices)) state.invoices = [];
                     if (!Array.isArray(state.cart)) state.cart = [];
                     if (!Array.isArray(state.notifications)) state.notifications = [];
+                    if (!state.productImages || typeof state.productImages !== 'object' || Array.isArray(state.productImages)) state.productImages = {};
                     try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
                     console.log('✅ تم تحميل بيانات العميل');
                     return true;
@@ -1678,6 +1695,7 @@
             if (confirm('تحذير! حذف كل البيانات. متأكد؟')) {
                 const sub = state.subscription; const adminClients = state.adminClients;
                 state.products = []; state.invoices = []; state.customers = []; state.expenses = []; state.cart = [];
+                state.productImages = {};
                 state.subscription = sub; state.adminClients = adminClients;
                 saveState(); renderAll(); showToast('تم الحذف', 'delete');
             }
@@ -2025,16 +2043,20 @@
                 productId = Date.now();
                 state.products.push({ id: productId, name, sku, category, qty, unit, minLimit, cost, retailPrice, wholesalePrice, barcode, notes });
             }
-            // ⭐ حفظ الصورة محلياً ⭐
+            // ⭐ حفظ الصورة (سحابياً + محلياً) ⭐
             try {
                 if (pendingProductImage === null) {
                     // المستخدم طلب حذف الصورة
                     removeProductImage(productId);
                 } else if (typeof pendingProductImage === 'string' && pendingProductImage.length > 0) {
-                    // صورة جديدة
-                    setProductImage(productId, pendingProductImage);
+                    // صورة جديدة → حفظ في state (سيتم رفعها لـ Firebase مع saveState)
+                    const ok = setProductImage(productId, pendingProductImage);
+                    if (!ok) {
+                        // فشل الحفظ بسبب الحجم، لكن نكمل إضافة المنتج
+                        console.warn('⚠️ لم يتم حفظ الصورة بسبب الحجم');
+                    }
                 }
-                // إذا كانت undefined → لا تغيير (احتفظ بالصورة القديمة عند التعديل)
+                // إذا كانت undefined → لا تغيير
             } catch(imgErr) {
                 console.error('Image save error:', imgErr);
             }
@@ -2059,7 +2081,7 @@
             document.getElementById('prodWholesalePrice').value = product.wholesalePrice || 0;
             document.getElementById('prodBarcode').value = product.barcode || '';
             document.getElementById('prodNotes').value = product.notes || '';
-            // ⭐ تحميل الصورة الحالية ⭐
+            // ⭐ تحميل الصورة الحالية (من السحابة أو المحلي) ⭐
             pendingProductImage = undefined;
             const existingImg = getProductImage(id);
             const preview = document.getElementById('prodImagePreview');
@@ -2079,7 +2101,7 @@
             const product = state.products.find(p => p.id === id);
             if (!product) return;
             if (confirm(`حذف المنتج "${product.name}"؟`)) {
-                removeProductImage(id); // ⭐ حذف الصورة المحلية
+                removeProductImage(id); // ⭐ حذف الصورة من السحابة والمحلي
                 state.products = state.products.filter(p => p.id !== id);
                 saveState();
                 showToast(`تم حذف "${product.name}"`, 'delete');
@@ -2411,6 +2433,7 @@
                         if (!state.subscription) state.subscription = currentSub;
                         if (!state.adminClients) state.adminClients = adminClients;
                         if (!Array.isArray(state.notifications)) state.notifications = [];
+                        if (!state.productImages || typeof state.productImages !== 'object' || Array.isArray(state.productImages)) state.productImages = {};
                         saveState();
                         renderAll();
                         showToast('تم الاستيراد', 'success');
