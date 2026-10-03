@@ -1,6 +1,56 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+        <!-- ⭐⭐⭐ كود إجبار التحديث التلقائي ⭐⭐⭐ -->
+    <script>
+        (function forceAppUpdate() {
+            const CURRENT_VERSION = '2.2.1'; // ← غيّر هذا الرقم مع كل تحديث جديد
+            const VERSION_KEY = 'alhasan_app_version';
+            const storedVersion = localStorage.getItem(VERSION_KEY);
+            
+            console.log('📱 نسخة التطبيق المخزنة:', storedVersion);
+            console.log('📱 النسخة الحالية:', CURRENT_VERSION);
+            
+            // إذا كانت النسخة المخزنة مختلفة عن الحالية → مسح كل شيء وتحديث
+            if (storedVersion !== CURRENT_VERSION) {
+                console.log('🔄 تم اكتشاف نسخة جديدة! جاري التحديث...');
+                
+                // حفظ النسخة الجديدة
+                localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+                
+                // 1) مسح جميع الـ Caches
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        return Promise.all(names.map(function(name) {
+                            console.log('🗑️ حذف الكاش:', name);
+                            return caches.delete(name);
+                        }));
+                    }).then(function() {
+                        console.log('✅ تم حذف جميع الكاشات');
+                    });
+                }
+                
+                // 2) إلغاء تسجيل Service Worker القديم
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        registrations.forEach(function(registration) {
+                            console.log('🗑️ إلغاء Service Worker:', registration.scope);
+                            registration.unregister();
+                        });
+                    });
+                }
+                
+                // 3) إعادة تحميل الصفحة بقوة بعد لحظة
+                setTimeout(function() {
+                    console.log('🔃 إعادة تحميل الصفحة...');
+                    window.location.reload(true);
+                }, 800);
+            } else {
+                console.log('✅ التطبيق محدّث بالفعل');
+            }
+        })();
+    </script>
+    <!-- ⭐⭐⭐ نهاية كود إجبار التحديث ⭐⭐⭐ -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>الحسن للمحاسبة | نظام سحابي متكامل</title>
