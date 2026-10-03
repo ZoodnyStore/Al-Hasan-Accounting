@@ -149,6 +149,9 @@
         .notif-item { transition: all 0.2s; }
         .notif-item:hover { background-color: rgba(30, 41, 59, 0.7); }
         .notif-item.unread { background-color: rgba(30, 41, 59, 0.4); }
+        .ai-message-bubble { animation: fadeIn 0.3s ease; }
+        @keyframes typing-dot { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+        .typing-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #facc15; animation: typing-dot 1.4s infinite; }
     </style>
 </head>
 <body>
@@ -251,6 +254,7 @@
                 <div>
                     <p class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">النظام</p>
                     <div class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer text-slate-300 hover:bg-navy-700 hover:text-white" onclick="switchPage('settings', this)"><i class="fa-solid fa-gear w-5 text-center text-slate-400"></i><span class="font-semibold text-sm">الإعدادات</span></div>
+                    <div class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer text-slate-300 hover:bg-navy-700 hover:text-white" onclick="switchPage('aiAssistant', this)"><i class="fa-solid fa-robot w-5 text-center text-slate-400"></i><span class="font-semibold text-sm">المساعد الذكي</span></div>
                 </div>
             </nav>
             <div class="p-4 border-t border-navy-700 bg-navy-900/30 space-y-2">
@@ -526,9 +530,96 @@
                             <h3 class="text-3xl font-bold text-gold-400 mb-2">الحسن للمحاسبة</h3>
                             <p class="text-slate-400 text-sm mb-4">نظام محاسبة متكامل للمبيعات والمخزون</p>
                             <div class="flex items-center gap-3 text-xs text-slate-500">
-                                <span>الإصدار 2.0.0</span>
+                                <span>الإصدار 2.1.0</span>
                                 <span class="w-1 h-1 rounded-full bg-slate-600"></span>
                                 <span>© جميع الحقوق محفوظة 2026</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="aiAssistant" class="page">
+                    <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+                        <div>
+                            <h2 class="text-3xl font-bold text-white mb-1"><i class="fa-solid fa-robot text-gold-400"></i> المساعد الذكي</h2>
+                            <p class="text-slate-400 text-sm">اسأل عن مبيعاتك، مخزونك، أو أي شيء يخص متجرك</p>
+                        </div>
+                        <div id="aiStatusBadge" class="bg-navy-800 px-4 py-2 rounded-xl border border-navy-700 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-circle text-slate-500 text-xs"></i>
+                            <span class="text-slate-400">غير متصل</span>
+                        </div>
+                    </div>
+
+                    <!-- إعدادات الاتصال -->
+                    <div class="bg-gradient-to-r from-navy-800 to-navy-700 p-6 rounded-2xl border border-gold-500/30 shadow-xl mb-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-gold-500 rounded-xl flex items-center justify-center text-navy-900 text-xl shadow-lg"><i class="fa-solid fa-key"></i></div>
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-white">إعدادات الاتصال</h3>
+                                <p class="text-slate-400 text-sm">أدخل مفتاح Gemini API لتشغيل المساعد</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1">Gemini API Key</label>
+                                <div class="flex gap-2">
+                                    <input type="password" id="aiApiKey" placeholder="AIza..." class="flex-1 bg-navy-900 border border-navy-700 rounded-lg p-3 text-white focus:border-gold-400 outline-none font-mono text-sm" dir="ltr">
+                                    <button onclick="toggleAiKeyVisibility()" class="bg-navy-700 hover:bg-navy-600 text-white px-4 rounded-lg"><i id="aiKeyEye" class="fa-solid fa-eye"></i></button>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-2">
+                                    <i class="fa-solid fa-info-circle text-gold-400"></i>
+                                    احصل على مفتاح مجاني من
+                                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-gold-400 hover:underline">Google AI Studio</a>
+                                    — يُحفظ المفتاح في جهازك فقط ولا يُرسل لأي مكان.
+                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1">النموذج</label>
+                                <select id="aiModel" class="w-full bg-navy-900 border border-navy-700 rounded-lg p-3 text-white focus:border-gold-400 outline-none">
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (سريع - موصى به)</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (أدق - أبطأ)</option>
+                                    <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (تجريبي)</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-3 flex-wrap">
+                                <button onclick="saveAiSettings()" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-6 py-3 rounded-xl shadow-lg flex items-center gap-2"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات</button>
+                                <button onclick="testAiConnection()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg flex items-center gap-2"><i class="fa-solid fa-plug"></i> اختبار الاتصال</button>
+                                <button onclick="clearAiSettings()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold px-6 py-3 rounded-xl border border-red-500/30 flex items-center gap-2"><i class="fa-solid fa-trash"></i> حذف المفتاح</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- المحادثة -->
+                    <div class="bg-navy-800 rounded-2xl border border-navy-700 shadow-xl flex flex-col" style="height: calc(100vh - 480px); min-height: 420px;">
+                        <div class="flex items-center justify-between p-4 border-b border-navy-700">
+                            <h3 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-comments text-gold-400"></i> المحادثة</h3>
+                            <button onclick="clearAiChat()" class="text-red-400 hover:text-red-300 text-sm flex items-center gap-1"><i class="fa-solid fa-trash"></i> مسح المحادثة</button>
+                        </div>
+                        <div id="aiChatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
+                            <div class="flex gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-robot"></i></div>
+                                <div class="bg-navy-900 rounded-2xl rounded-tr-none p-3 max-w-[80%] border border-navy-700">
+                                    <p class="text-white text-sm leading-relaxed font-bold mb-2">مرحباً! 👋 أنا مساعدك الذكي.</p>
+                                    <p class="text-slate-300 text-sm leading-relaxed mb-2">يمكنني مساعدتك في:</p>
+                                    <ul class="text-slate-300 text-sm space-y-1 list-disc list-inside">
+                                        <li>تحليل مبيعاتك وأرباحك</li>
+                                        <li>معرفة المنتجات الأكثر مبيعاً</li>
+                                        <li>تنبيهك للمنتجات التي تحتاج إعادة تخزين</li>
+                                        <li>نصائح لتحسين أداء متجرك</li>
+                                    </ul>
+                                    <p class="text-slate-400 text-xs mt-2">ابدأ بكتابة سؤالك بالأسفل ⬇️</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t border-navy-700 bg-navy-900/30">
+                            <div class="flex gap-2 mb-3 overflow-x-auto pb-2 custom-scrollbar">
+                                <button onclick="askAiQuick('لخص لي مبيعات اليوم')" class="whitespace-nowrap bg-navy-700 hover:bg-navy-600 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition-colors">📊 ملخص مبيعات اليوم</button>
+                                <button onclick="askAiQuick('ما هي المنتجات الأكثر مبيعاً؟')" class="whitespace-nowrap bg-navy-700 hover:bg-navy-600 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition-colors">🏆 الأكثر مبيعاً</button>
+                                <button onclick="askAiQuick('ما هي المنتجات التي تحتاج إعادة تخزين؟')" class="whitespace-nowrap bg-navy-700 hover:bg-navy-600 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition-colors">⚠️ منتجات ناقصة</button>
+                                <button onclick="askAiQuick('كيف يمكنني زيادة أرباحي؟')" class="whitespace-nowrap bg-navy-700 hover:bg-navy-600 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition-colors">💡 نصائح للربح</button>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="aiChatInput" placeholder="اكتب سؤالك هنا..." class="flex-1 bg-navy-900 border border-navy-700 rounded-xl p-3 text-white focus:border-gold-400 outline-none" onkeypress="if(event.key==='Enter') sendAiMessage()">
+                                <button onclick="sendAiMessage()" id="aiSendBtn" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-5 rounded-xl flex items-center gap-2 transition-colors"><i class="fa-solid fa-paper-plane"></i></button>
                             </div>
                         </div>
                     </div>
@@ -757,14 +848,12 @@
                 return;
             }
             window.addEventListener('load', () => {
-                // Try to register external sw.js first (preferred for PWABuilder)
                 navigator.serviceWorker.register('./sw.js', { scope: './' })
                     .then((registration) => {
                         console.log('✅ PWA Service Worker registered (external):', registration.scope);
                     })
                     .catch((err) => {
                         console.warn('⚠️ External sw.js not found, trying inline Service Worker...');
-                        // Fallback: create inline SW as Blob URL
                         try {
                             const swCode = `
                                 const CACHE_NAME = 'alhasan-pwa-v1';
@@ -1698,6 +1787,7 @@
             document.getElementById('dashLastUpdate').innerText = todayDate;
             updateSubscriptionUI();
             renderAll();
+            try { loadAiSettings(); } catch(e) {}
             setTimeout(() => { try { generateAutoNotifications(); } catch(e) { console.error('Notification error:', e); } }, 800);
         }
 
@@ -1747,7 +1837,7 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             element.classList.add('active');
-            const titles = { dashboard: 'لوحة التحكم', pos: 'نقطة البيع', inventory: 'المنتجات والمخزون', invoices: 'سجل المبيعات', customers: 'إدارة العملاء', productInquiry: 'استفسار عن منتج', expenses: 'المصروفات', reports: 'التقارير المالية', settings: 'الإعدادات' };
+            const titles = { dashboard: 'لوحة التحكم', pos: 'نقطة البيع', inventory: 'المنتجات والمخزون', invoices: 'سجل المبيعات', customers: 'إدارة العملاء', productInquiry: 'استفسار عن منتج', expenses: 'المصروفات', reports: 'التقارير المالية', settings: 'الإعدادات', aiAssistant: 'المساعد الذكي' };
             document.getElementById('page-title').innerText = titles[pageId];
             if (pageId === 'reports') renderReports();
             if (pageId === 'settings') {
@@ -1768,6 +1858,7 @@
             if (pageId === 'inventory') renderInventory();
             if (pageId === 'pos') { renderPosCategories(); renderPOSProducts(); }
             if (pageId === 'dashboard') renderDashboard();
+            if (pageId === 'aiAssistant') { loadAiSettings(); }
             if (window.innerWidth < 1024) closeMobileSidebar();
         }
 
@@ -2899,6 +2990,294 @@
                 } catch (err) { showToast('ملف غير صالح', 'warning'); }
             };
             reader.readAsText(file);
+        }
+
+        /* ============================================
+           المساعد الذكي - AI Assistant
+           ============================================ */
+        const AI_STORAGE_KEY = 'alhasan_ai_settings';
+        let aiChatHistory = [];
+
+        function loadAiSettings() {
+            try {
+                const saved = localStorage.getItem(AI_STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    const keyEl = document.getElementById('aiApiKey');
+                    const modelEl = document.getElementById('aiModel');
+                    if (keyEl && parsed.apiKey) keyEl.value = parsed.apiKey;
+                    if (modelEl && parsed.model) modelEl.value = parsed.model;
+                    updateAiStatusBadge(!!parsed.apiKey);
+                } else {
+                    updateAiStatusBadge(false);
+                }
+            } catch(e) { console.warn('AI settings load error:', e); }
+        }
+
+        function saveAiSettings() {
+            const apiKey = document.getElementById('aiApiKey').value.trim();
+            const model = document.getElementById('aiModel').value;
+            if (!apiKey) {
+                showToast('⚠️ أدخل مفتاح API أولاً', 'warning');
+                return;
+            }
+            try {
+                localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({ apiKey, model }));
+                updateAiStatusBadge(true);
+                showToast('✅ تم حفظ إعدادات المساعد الذكي', 'success');
+            } catch(e) {
+                showToast('❌ فشل الحفظ', 'error');
+            }
+        }
+
+        function clearAiSettings() {
+            if (!confirm('هل أنت متأكد من حذف مفتاح API؟')) return;
+            localStorage.removeItem(AI_STORAGE_KEY);
+            document.getElementById('aiApiKey').value = '';
+            updateAiStatusBadge(false);
+            showToast('🗑️ تم حذف المفتاح', 'delete');
+        }
+
+        function toggleAiKeyVisibility() {
+            const input = document.getElementById('aiApiKey');
+            const eye = document.getElementById('aiKeyEye');
+            if (input.type === 'password') { input.type = 'text'; eye.className = 'fa-solid fa-eye-slash'; }
+            else { input.type = 'password'; eye.className = 'fa-solid fa-eye'; }
+        }
+
+        function updateAiStatusBadge(connected) {
+            const badge = document.getElementById('aiStatusBadge');
+            if (!badge) return;
+            if (connected) {
+                badge.innerHTML = '<i class="fa-solid fa-circle text-emerald-400 text-xs"></i><span class="text-emerald-400 font-bold">متصل</span>';
+            } else {
+                badge.innerHTML = '<i class="fa-solid fa-circle text-slate-500 text-xs"></i><span class="text-slate-400">غير متصل</span>';
+            }
+        }
+
+        function getAiSettings() {
+            try {
+                const saved = localStorage.getItem(AI_STORAGE_KEY);
+                if (!saved) return null;
+                const parsed = JSON.parse(saved);
+                if (!parsed.apiKey) return null;
+                return parsed;
+            } catch(e) { return null; }
+        }
+
+        async function callGemini(prompt) {
+            const settings = getAiSettings();
+            if (!settings || !settings.apiKey) {
+                showToast('⚠️ يرجى إعداد مفتاح API أولاً', 'warning');
+                return null;
+            }
+            const model = settings.model || 'gemini-1.5-flash';
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.apiKey}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+                    })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    console.error('Gemini API error:', errData);
+                    if (response.status === 400) throw new Error('مفتاح API غير صالح');
+                    if (response.status === 403) throw new Error('المفتاح غير مصرح له');
+                    if (response.status === 429) throw new Error('تم تجاوز الحد المسموح، حاول لاحقاً');
+                    throw new Error(errData.error?.message || 'فشل الاتصال');
+                }
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) throw new Error('لم يتم استلام رد');
+                return text;
+            } catch (err) {
+                console.error('Gemini call error:', err);
+                showToast('❌ ' + (err.message || 'فشل الاتصال'), 'error');
+                return null;
+            }
+        }
+
+        function buildStoreContext() {
+            const today = new Date().toLocaleDateString('ar-EG');
+            const todayInvoices = state.invoices.filter(i => i.date.includes(today));
+            const todaySales = todayInvoices.reduce((s, i) => s + i.totalUSD, 0);
+            const todayProfit = todayInvoices.reduce((s, i) => s + (i.profit || 0), 0);
+            const totalSales = state.invoices.reduce((s, i) => s + i.totalUSD, 0);
+            const totalProfit = state.invoices.reduce((s, i) => s + (i.profit || 0), 0);
+            const lowStock = state.products.filter(p => p.qty <= (p.minLimit || 10));
+            const productSales = {};
+            state.invoices.forEach(inv => {
+                if (inv.items) inv.items.forEach(item => {
+                    productSales[item.name] = (productSales[item.name] || 0) + item.qty;
+                });
+            });
+            const topProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            return {
+                storeName: state.settings.storeName || 'المتجر',
+                today: today,
+                todaySales: todaySales.toFixed(2),
+                todayProfit: todayProfit.toFixed(2),
+                todayTransactions: todayInvoices.length,
+                totalSales: totalSales.toFixed(2),
+                totalProfit: totalProfit.toFixed(2),
+                totalInvoices: state.invoices.length,
+                totalProducts: state.products.length,
+                totalCustomers: state.customers.length,
+                lowStockCount: lowStock.length,
+                lowStockNames: lowStock.slice(0, 10).map(p => `${p.name} (${p.qty})`).join(', '),
+                topProducts: topProducts.map(p => `${p[0]}: ${p[1]} قطعة`).join(', '),
+                exchangeRate: state.settings.exchangeRate
+            };
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function addAiMessage(role, text) {
+            const container = document.getElementById('aiChatMessages');
+            if (!container) return;
+            const div = document.createElement('div');
+            if (role === 'user') {
+                div.className = 'flex gap-3 justify-end ai-message-bubble';
+                div.innerHTML = `
+                    <div class="bg-gold-500 text-navy-900 rounded-2xl rounded-tl-none p-3 max-w-[80%] shadow-lg">
+                        <p class="text-sm leading-relaxed font-semibold">${escapeHtml(text)}</p>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-gold-500 text-navy-900 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-user"></i></div>
+                `;
+            } else if (role === 'ai') {
+                div.className = 'flex gap-3 ai-message-bubble';
+                div.innerHTML = `
+                    <div class="w-9 h-9 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-robot"></i></div>
+                    <div class="bg-navy-900 rounded-2xl rounded-tr-none p-3 max-w-[80%] border border-navy-700">
+                        <p class="text-white text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(text)}</p>
+                    </div>
+                `;
+            } else if (role === 'loading') {
+                div.id = 'aiLoadingMsg';
+                div.className = 'flex gap-3';
+                div.innerHTML = `
+                    <div class="w-9 h-9 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-robot"></i></div>
+                    <div class="bg-navy-900 rounded-2xl rounded-tr-none p-3 border border-navy-700">
+                        <div class="flex gap-1 items-center">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot" style="animation-delay:0.2s"></span>
+                            <span class="typing-dot" style="animation-delay:0.4s"></span>
+                        </div>
+                    </div>
+                `;
+            } else if (role === 'error') {
+                div.className = 'flex gap-3 ai-message-bubble';
+                div.innerHTML = `
+                    <div class="w-9 h-9 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    <div class="bg-red-500/10 rounded-2xl rounded-tr-none p-3 max-w-[80%] border border-red-500/30">
+                        <p class="text-red-400 text-sm leading-relaxed">${escapeHtml(text)}</p>
+                    </div>
+                `;
+            }
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendAiMessage() {
+            const input = document.getElementById('aiChatInput');
+            const sendBtn = document.getElementById('aiSendBtn');
+            const message = input.value.trim();
+            if (!message) return;
+            const settings = getAiSettings();
+            if (!settings || !settings.apiKey) {
+                showToast('⚠️ يرجى حفظ مفتاح API أولاً', 'warning');
+                return;
+            }
+            addAiMessage('user', message);
+            input.value = '';
+            sendBtn.disabled = true;
+            sendBtn.classList.add('opacity-50');
+            addAiMessage('loading', '');
+            const ctx = buildStoreContext();
+            const systemPrompt = `أنت مساعد محاسبي ذكي لتطبيق "${ctx.storeName}". 
+لديك البيانات التالية عن المتجر (تاريخ اليوم: ${ctx.today}):
+- مبيعات اليوم: ${ctx.todaySales} دولار (${ctx.todayTransactions} عملية بيع)
+- أرباح اليوم: ${ctx.todayProfit} دولار
+- إجمالي المبيعات: ${ctx.totalSales} دولار
+- إجمالي الأرباح: ${ctx.totalProfit} دولار
+- عدد الفواتير: ${ctx.totalInvoices}
+- عدد المنتجات: ${ctx.totalProducts}
+- عدد العملاء: ${ctx.totalCustomers}
+- المنتجات منخفضة المخزون (${ctx.lowStockCount}): ${ctx.lowStockNames || 'لا يوجد'}
+- الأكثر مبيعاً: ${ctx.topProducts || 'لا يوجد'}
+- سعر الصرف: 1$ = ${ctx.exchangeRate} ل.س
+
+أجب باللغة العربية بشكل موجز ومفيد. استخدم الأرقام الفعلية من البيانات أعلاه. إذا كان السؤال لا علاقة له بالمتجر، أعد التوجيه بلطف.`;
+            const fullPrompt = `${systemPrompt}\n\nسؤال المستخدم: ${message}`;
+            const response = await callGemini(fullPrompt);
+            const loadingMsg = document.getElementById('aiLoadingMsg');
+            if (loadingMsg) loadingMsg.remove();
+            if (response) {
+                addAiMessage('ai', response);
+                aiChatHistory.push({ role: 'user', text: message });
+                aiChatHistory.push({ role: 'ai', text: response });
+            } else {
+                addAiMessage('error', 'عذراً، حدث خطأ أثناء الاتصال. تحقق من المفتاح والاتصال بالإنترنت.');
+            }
+            sendBtn.disabled = false;
+            sendBtn.classList.remove('opacity-50');
+        }
+
+        function askAiQuick(question) {
+            const input = document.getElementById('aiChatInput');
+            if (input) {
+                input.value = question;
+                sendAiMessage();
+            }
+        }
+
+        function clearAiChat() {
+            if (!confirm('مسح المحادثة؟')) return;
+            const container = document.getElementById('aiChatMessages');
+            if (container) {
+                container.innerHTML = `
+                    <div class="flex gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-robot"></i></div>
+                        <div class="bg-navy-900 rounded-2xl rounded-tr-none p-3 max-w-[80%] border border-navy-700">
+                            <p class="text-white text-sm leading-relaxed">تم مسح المحادثة. كيف يمكنني مساعدتك؟</p>
+                        </div>
+                    </div>
+                `;
+            }
+            aiChatHistory = [];
+            showToast('🗑️ تم مسح المحادثة', 'delete');
+        }
+
+        async function testAiConnection() {
+            const apiKey = document.getElementById('aiApiKey').value.trim();
+            const model = document.getElementById('aiModel').value;
+            if (!apiKey) { showToast('⚠️ أدخل المفتاح أولاً', 'warning'); return; }
+            showToast('⏳ جاري الاختبار...', 'info');
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: 'قل: مرحباً' }] }] })
+                });
+                if (!response.ok) throw new Error('فشل الاتصال (كود: ' + response.status + ')');
+                const data = await response.json();
+                if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    showToast('✅ الاتصال ناجح!', 'success');
+                    updateAiStatusBadge(true);
+                } else { throw new Error('رد غير متوقع'); }
+            } catch (err) {
+                showToast('❌ ' + err.message, 'error');
+                updateAiStatusBadge(false);
+            }
         }
 
         (function initHiddenMasterAccess() {
