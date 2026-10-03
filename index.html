@@ -4,6 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>الحسن للمحاسبة | نظام سحابي متكامل</title>
+
+    <!-- ⭐⭐⭐ PWA Meta Tags ⭐⭐⭐ -->
+    <meta name="theme-color" content="#0a1120">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="الحسن للمحاسبة">
+    <meta name="application-name" content="الحسن للمحاسبة">
+    <meta name="description" content="نظام محاسبة متكامل للمبيعات والمخزون">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- ⭐⭐⭐ PWA Manifest (يُولَّد ديناميكياً كـ Blob) ⭐⭐⭐ -->
+    <script>
+        (function generatePWAManifest() {
+            try {
+                const manifestData = {
+                    "name": "الحسن للمحاسبة",
+                    "short_name": "الحسن",
+                    "description": "نظام محاسبة متكامل للمبيعات والمخزون",
+                    "start_url": "./",
+                    "scope": "./",
+                    "display": "standalone",
+                    "orientation": "portrait",
+                    "background_color": "#0a1120",
+                    "theme_color": "#0a1120",
+                    "lang": "ar",
+                    "dir": "rtl",
+                    "categories": ["business", "finance", "productivity"],
+                    "icons": [
+                        { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+                        { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+                        { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+                    ]
+                };
+                const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/manifest+json' });
+                const manifestURL = URL.createObjectURL(blob);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = manifestURL;
+                document.head.appendChild(link);
+                console.log('✅ PWA Manifest created dynamically');
+            } catch (e) {
+                console.warn('⚠️ Manifest generation failed:', e);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = 'manifest.json';
+                document.head.appendChild(link);
+            }
+        })();
+    </script>
+    <!-- ⭐⭐⭐ نهاية إعداد PWA ⭐⭐⭐ -->
+
     <link rel="icon" type="image/png" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -125,7 +177,6 @@
             #inventoryListContainer > .product-card .action-btn i { font-size: 10px !important; }
             #inventoryListContainer > .product-card .unit-qty { font-size: 0.6rem !important; }
 
-            /* صفحة الاستفسار على الجوال */
             #productInquiry .inquiry-title { font-size: 1.5rem !important; }
             #productInquiry .inquiry-price-value { font-size: 1.75rem !important; }
             #productInquiry .inquiry-image { width: 128px !important; height: 128px !important; }
@@ -734,6 +785,90 @@
             </div>
         </div>
     </div>
+
+    <!-- ⭐⭐⭐ PWA Service Worker Registration ⭐⭐⭐ -->
+    <script>
+        (function registerPWAServiceWorker() {
+            if (!('serviceWorker' in navigator)) {
+                console.log('⚠️ Service Worker not supported in this browser');
+                return;
+            }
+            window.addEventListener('load', () => {
+                // Try to register external sw.js first (preferred for PWABuilder)
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .then((registration) => {
+                        console.log('✅ PWA Service Worker registered (external):', registration.scope);
+                    })
+                    .catch((err) => {
+                        console.warn('⚠️ External sw.js not found, trying inline Service Worker...');
+                        // Fallback: create inline SW as Blob URL
+                        try {
+                            const swCode = `
+                                const CACHE_NAME = 'alhasan-pwa-v1';
+                                const ASSETS = ['./', './index.html'];
+
+                                self.addEventListener('install', (event) => {
+                                    event.waitUntil(
+                                        caches.open(CACHE_NAME).then((cache) => {
+                                            return Promise.all(
+                                                ASSETS.map((url) => cache.add(url).catch(() => null))
+                                            );
+                                        })
+                                    );
+                                    self.skipWaiting();
+                                });
+
+                                self.addEventListener('activate', (event) => {
+                                    event.waitUntil(
+                                        caches.keys().then((keys) => {
+                                            return Promise.all(
+                                                keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+                                            );
+                                        }).then(() => self.clients.claim())
+                                    );
+                                });
+
+                                self.addEventListener('fetch', (event) => {
+                                    if (event.request.method !== 'GET') return;
+                                    const url = new URL(event.request.url);
+                                    if (url.origin !== self.location.origin && url.origin !== location.origin) return;
+                                    event.respondWith(
+                                        caches.match(event.request).then((cached) => {
+                                            if (cached) return cached;
+                                            return fetch(event.request).then((response) => {
+                                                if (response && response.status === 200 && response.type === 'basic') {
+                                                    const clone = response.clone();
+                                                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone).catch(() => null));
+                                                }
+                                                return response;
+                                            }).catch(() => {
+                                                if (event.request.mode === 'navigate') {
+                                                    return caches.match('./index.html');
+                                                }
+                                            });
+                                        })
+                                    );
+                                });
+                            `;
+                            const blob = new Blob([swCode], { type: 'application/javascript' });
+                            const blobURL = URL.createObjectURL(blob);
+                            navigator.serviceWorker.register(blobURL)
+                                .then((reg) => {
+                                    console.log('✅ Inline Service Worker registered:', reg.scope);
+                                })
+                                .catch((e) => {
+                                    console.warn('⚠️ Inline SW registration also failed (browser security):', e.message);
+                                    console.info('ℹ️ لتفعيل PWA بشكل كامل، أنشئ ملف sw.js بجانب index.html');
+                                });
+                        } catch (e) {
+                            console.warn('⚠️ Could not create inline SW:', e);
+                        }
+                    });
+            });
+        })();
+    </script>
+    <!-- ⭐⭐⭐ نهاية PWA Service Worker ⭐⭐⭐ -->
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBRmtYWSSaJnmG63Li4gAbaFf1nG7keFKY",
@@ -2327,7 +2462,6 @@
             currentPayDebtCustomerId = null;
         }
 
-        // ⭐⭐⭐ صفحة استفسار عن منتج ⭐⭐⭐
         function renderInquiryRate() {
             const rn = document.getElementById('inquiryRateNew');
             const ro = document.getElementById('inquiryRateOld');
@@ -2732,7 +2866,6 @@
             }
             closeModal('scannerModal');
 
-            // ⭐ إصلاح الإشعار المزدوج في نقطة البيع: addToCart يعرض إشعاره الخاص، لذا لا نعرض إشعاراً ثانياً
             if (targetInput === 'posSearch') {
                 const product = state.products.find(p => p.barcode === decodedText || p.sku === decodedText);
                 if (product) {
@@ -2741,14 +2874,12 @@
                     showToast(`⚠️ لا يوجد منتج بالباركود: ${decodedText}`, 'warning');
                 }
             } else if (targetInput === 'inquirySearch') {
-                // في صفحة الاستفسار: نضع النص في الحقل ونطلق البحث
                 const inputEl = document.getElementById(targetInput);
                 if (inputEl) {
                     inputEl.value = decodedText;
                     inputEl.dispatchEvent(new Event('input', { bubbles: true }));
                     inputEl.dispatchEvent(new Event('change', { bubbles: true }));
                 }
-                // إذا لم يوجد المنتج، أظهر إشعاراً
                 const found = state.products.find(p => p.barcode === decodedText || p.sku === decodedText);
                 if (!found) showToast(`⚠️ لا يوجد منتج بالباركود: ${decodedText}`, 'warning');
             } else if (targetInput) {
