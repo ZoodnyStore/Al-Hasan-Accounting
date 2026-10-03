@@ -94,15 +94,14 @@
             #cartItems { max-height: 250px !important; }
             .toast-notification { min-width: auto !important; padding: 12px 16px !important; font-size: 12px !important; }
 
-            /* ============================================================ */
             /* ⭐ إصلاح بطاقات المنتجات في المخزون على الجوال ⭐ */
-            /* ============================================================ */
             #inventoryListContainer > .product-card { padding: 8px !important; gap: 6px !important; border-radius: 12px !important; }
             #inventoryListContainer > .product-card .product-qty-badge { width: 22px !important; height: 22px !important; font-size: 10px !important; border-radius: 6px !important; top: 6px !important; left: 6px !important; }
             #inventoryListContainer > .product-card .product-name { font-size: 0.8rem !important; line-height: 1.2 !important; margin-bottom: 2px !important; padding-left: 26px; word-break: break-word; }
             #inventoryListContainer > .product-card .product-barcode-text { font-size: 0.55rem !important; line-height: 1.1 !important; word-break: break-all; }
-            #inventoryListContainer > .product-card .barcode-container { min-height: 45px !important; padding: 3px !important; border-radius: 8px !important; overflow: hidden; }
-            #inventoryListContainer > .product-card .barcode-container svg { width: 100% !important; height: auto !important; max-height: 42px !important; display: block; }
+            #inventoryListContainer > .product-card .product-image-container { min-height: 60px !important; border-radius: 8px !important; }
+            #inventoryListContainer > .product-card .product-image-container .barcode-btn { width: 22px !important; height: 22px !important; border-radius: 6px !important; bottom: 4px !important; left: 4px !important; }
+            #inventoryListContainer > .product-card .product-image-container .barcode-btn i { font-size: 9px !important; }
             #inventoryListContainer > .product-card .price-grid { gap: 3px !important; }
             #inventoryListContainer > .product-card .price-box { padding: 4px 2px !important; border-radius: 8px !important; min-width: 0; overflow: hidden; }
             #inventoryListContainer > .product-card .price-box .price-label { font-size: 0.5rem !important; margin-bottom: 1px !important; display: block; line-height: 1; }
@@ -485,6 +484,25 @@
         <div class="bg-navy-800 p-6 rounded-2xl w-full max-w-2xl border border-navy-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold text-white" id="productModalTitle">إضافة منتج جديد</h3><button onclick="closeProductModal()" class="text-slate-400 hover:text-white text-2xl">&times;</button></div>
             <div class="space-y-5">
+
+                <!-- ⭐ صورة المنتج ⭐ -->
+                <div class="bg-navy-900 p-4 rounded-xl border border-navy-700">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-slate-300 font-semibold"><i class="fa-solid fa-image text-gold-400 ml-1"></i> صورة المنتج (اختياري)</label>
+                        <span class="text-[10px] text-slate-500">تُخزَّن محلياً على جهازك فقط</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div id="prodImagePreview" class="w-24 h-24 rounded-xl bg-navy-800 border-2 border-dashed border-navy-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <i class="fa-solid fa-image text-slate-500 text-2xl"></i>
+                        </div>
+                        <div class="flex flex-col gap-2 flex-1">
+                            <button type="button" onclick="document.getElementById('prodImageInput').click()" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-upload"></i> اختيار صورة من الجهاز</button>
+                            <button type="button" onclick="removeProductImagePreview()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm border border-red-500/30"><i class="fa-solid fa-trash"></i> إزالة الصورة</button>
+                        </div>
+                        <input type="file" id="prodImageInput" class="hidden" accept="image/*" onchange="handleProductImage(event)">
+                    </div>
+                </div>
+
                 <div class="bg-navy-900 p-4 rounded-xl border border-navy-700">
                     <div class="flex justify-between items-center mb-3"><label class="text-slate-300 font-semibold">الباركود</label><button onclick="generateBarcode()" class="text-gold-400 text-sm hover:underline"><i class="fa-solid fa-rotate"></i> توليد جديد</button></div>
                     <div class="flex gap-2"><input type="text" id="prodBarcode" class="w-full bg-navy-800 border border-navy-600 rounded-lg p-3 text-white focus:border-gold-400 outline-none" placeholder="امسح أو أدخل الباركود"><button onclick="openScanner('prodBarcode')" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-4 rounded-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> مسح</button></div>
@@ -509,6 +527,29 @@
             </div>
         </div>
     </div>
+
+    <!-- ⭐ نافذة عرض/تحميل الباركود ⭐ -->
+    <div id="barcodeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[10000] backdrop-blur-sm p-4">
+        <div class="bg-navy-800 p-6 rounded-2xl w-full max-w-md border-2 border-gold-500 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gold-400"><i class="fa-solid fa-barcode"></i> الباركود</h3>
+                <button onclick="closeModal('barcodeModal')" class="text-slate-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <p class="text-center text-white font-bold mb-3" id="barcodeModalName">-</p>
+            <div class="bg-white p-4 rounded-xl flex items-center justify-center min-h-[140px] mb-4 overflow-hidden">
+                <svg id="barcodeModalSvg" class="max-w-full"></svg>
+            </div>
+            <div class="bg-navy-900 p-3 rounded-xl border border-navy-700 mb-4 text-center">
+                <div class="text-xs text-slate-400 mb-1">الرقم</div>
+                <div class="text-white font-bold tracking-wider" id="barcodeModalNumber" dir="ltr">-</div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="downloadBarcodeFromModal()" class="flex-1 bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-3 rounded-lg flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> تحميل PNG</button>
+                <button onclick="closeModal('barcodeModal')" class="flex-1 bg-navy-700 hover:bg-navy-600 text-white font-bold py-3 rounded-lg">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
     <div id="addCustomerModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 backdrop-blur-sm">
         <div class="bg-navy-800 p-6 rounded-2xl w-full max-w-md border border-navy-700 shadow-2xl">
             <div class="flex justify-between items-center mb-6"><h3 class="text-xl font-bold text-white">إضافة عميل جديد</h3><button onclick="closeModal('addCustomerModal'); resetCustomerModal();" class="text-slate-400 hover:text-white text-2xl">&times;</button></div>
@@ -693,6 +734,179 @@
         }
 
         const MASTER_KEY = 'ALHASAN-MASTER-2026';
+
+        // ⭐⭐⭐ دوال تخزين صور المنتجات (محلي فقط) ⭐⭐⭐
+        const IMG_KEY_PREFIX = 'alhasan_img_';
+        let pendingProductImage = undefined; // undefined = لا تغيير | null = حذف | string = صورة جديدة
+
+        function getProductImage(id) {
+            try { return localStorage.getItem(IMG_KEY_PREFIX + id) || null; } catch(e) { return null; }
+        }
+
+        function setProductImage(id, dataUrl) {
+            try {
+                if (dataUrl) {
+                    localStorage.setItem(IMG_KEY_PREFIX + id, dataUrl);
+                } else {
+                    localStorage.removeItem(IMG_KEY_PREFIX + id);
+                }
+                return true;
+            } catch(e) {
+                console.error('Image save error:', e);
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    showToast('⚠️ مساحة التخزين ممتلئة! احذف بعض الصور القديمة', 'warning');
+                } else {
+                    showToast('⚠️ فشل تخزين الصورة', 'warning');
+                }
+                return false;
+            }
+        }
+
+        function removeProductImage(id) {
+            try { localStorage.removeItem(IMG_KEY_PREFIX + id); } catch(e) {}
+        }
+
+        // ⭐ ضغط الصورة قبل التخزين (لتوفير المساحة) ⭐
+        function compressImage(file, maxSize = 600, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                if (!file.type.startsWith('image/')) { reject(new Error('ليس ملف صورة')); return; }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let { width, height } = img;
+                        if (width > height) {
+                            if (width > maxSize) { height = Math.round(height * maxSize / width); width = maxSize; }
+                        } else {
+                            if (height > maxSize) { width = Math.round(width * maxSize / height); height = maxSize; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = () => reject(new Error('فشل تحميل الصورة'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ⭐ معالجة رفع صورة المنتج ⭐
+        async function handleProductImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('⚠️ حجم الصورة كبير جداً (الحد 5MB)', 'warning');
+                event.target.value = '';
+                return;
+            }
+            try {
+                showToast('⏳ جاري معالجة الصورة...', 'info');
+                const compressed = await compressImage(file, 600, 0.8);
+                pendingProductImage = compressed;
+                const preview = document.getElementById('prodImagePreview');
+                preview.innerHTML = `<img src="${compressed}" class="w-full h-full object-cover" alt="preview">`;
+                showToast('✅ تم رفع الصورة', 'success');
+            } catch(err) {
+                console.error(err);
+                showToast('⚠️ ' + (err.message || 'فشل معالجة الصورة'), 'warning');
+                event.target.value = '';
+            }
+        }
+
+        function removeProductImagePreview() {
+            pendingProductImage = null;
+            document.getElementById('prodImageInput').value = '';
+            const preview = document.getElementById('prodImagePreview');
+            preview.innerHTML = '<i class="fa-solid fa-image text-slate-500 text-2xl"></i>';
+        }
+
+        // ⭐ توليد HTML لعرض صورة المنتج ⭐
+        function getProductImageHtml(productId, options = {}) {
+            const img = getProductImage(productId);
+            if (img) {
+                return `<img src="${img}" class="w-full h-full object-cover" alt="product" loading="lazy">`;
+            }
+            const iconSize = options.iconSize || 'text-2xl';
+            return `<div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-box text-slate-600 ${iconSize}"></i></div>`;
+        }
+
+        // ⭐ نافذة عرض الباركود ⭐
+        let currentBarcodeForModal = '';
+        let currentBarcodeNameForModal = '';
+
+        function showBarcodeModal(barcode, productName) {
+            currentBarcodeForModal = barcode;
+            currentBarcodeNameForModal = productName || '';
+            document.getElementById('barcodeModalName').innerText = productName || '-';
+            document.getElementById('barcodeModalNumber').innerText = barcode || '-';
+            const svg = document.getElementById('barcodeModalSvg');
+            svg.innerHTML = '';
+            try {
+                if (typeof JsBarcode !== 'undefined') {
+                    JsBarcode(svg, barcode, { format: 'CODE128', textMargin: 2, fontOptions: 'bold', width: 2.5, height: 90, displayValue: true, fontSize: 16, margin: 10 });
+                } else {
+                    svg.outerHTML = '<div class="text-red-500 text-sm">مكتبة الباركود غير محملة</div>';
+                }
+            } catch(e) {
+                console.error('Barcode error:', e);
+                svg.outerHTML = '<div class="text-red-500 text-sm">فشل توليد الباركود</div>';
+            }
+            openModal('barcodeModal');
+        }
+
+        // ⭐ تحميل الباركود كصورة PNG ⭐
+        function downloadBarcodeFromModal() {
+            if (!currentBarcodeForModal) { showToast('⚠️ لا يوجد باركود', 'warning'); return; }
+            try {
+                const canvas = document.createElement('canvas');
+                JsBarcode(canvas, currentBarcodeForModal, {
+                    format: 'CODE128',
+                    textMargin: 8,
+                    fontOptions: 'bold',
+                    width: 4,
+                    height: 140,
+                    displayValue: true,
+                    fontSize: 24,
+                    margin: 20,
+                    background: '#ffffff',
+                    lineColor: '#000000'
+                });
+                // Add padding
+                const padding = 30;
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = canvas.width + padding * 2;
+                finalCanvas.height = canvas.height + padding * 2;
+                const ctx = finalCanvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+                ctx.drawImage(canvas, padding, padding);
+
+                finalCanvas.toBlob((blob) => {
+                    if (!blob) { showToast('⚠️ فشل إنشاء الصورة', 'warning'); return; }
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const safeName = (currentBarcodeNameForModal || 'barcode').replace(/[^\u0600-\u06FFa-zA-Z0-9]/g, '_').substring(0, 40);
+                    a.download = `barcode_${currentBarcodeForModal}_${safeName}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    showToast('✅ تم تحميل الباركود', 'success');
+                }, 'image/png');
+            } catch(e) {
+                console.error('Barcode download error:', e);
+                showToast('⚠️ فشل تحميل الباركود', 'warning');
+            }
+        }
+        // ==================================================
 
         function showToast(message, type = 'success') {
             try {
@@ -1417,9 +1631,14 @@
 
         function resetProductModal() {
             editingProductId = null;
+            pendingProductImage = undefined;
             document.getElementById('productModalTitle').innerText = 'إضافة منتج جديد';
             document.getElementById('productSubmitBtn').innerHTML = '<i class="fa-solid fa-save"></i> إضافة';
             ['prodName','prodSKU','prodCategory','prodQty','prodUnit','prodMinLimit','prodCost','prodRetailPrice','prodWholesalePrice','prodBarcode','prodNotes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            const preview = document.getElementById('prodImagePreview');
+            if (preview) preview.innerHTML = '<i class="fa-solid fa-image text-slate-500 text-2xl"></i>';
+            const imgInput = document.getElementById('prodImageInput');
+            if (imgInput) imgInput.value = '';
         }
         function closeProductModal() { try { resetProductModal(); } catch(e) {} closeModal('addProductModal'); }
         function syncExchangeRate(newRate, newOldRate) {
@@ -1491,11 +1710,15 @@
             state.invoices.forEach(inv => { if (inv.items) inv.items.forEach(item => { productSales[item.id] = (productSales[item.id] || 0) + item.qty; }); });
             const topProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, qty]) => {
                 const product = state.products.find(p => p.id == id);
-                return { name: product ? product.name : 'منتج محذوف', qty };
+                return { id: id, name: product ? product.name : 'منتج محذوف', qty };
             });
             const topProductsContainer = document.getElementById('dashTopProducts');
             if (topProducts.length === 0) topProductsContainer.innerHTML = '<p class="text-slate-500 text-center text-sm mt-4">لا توجد مبيعات بعد</p>';
-            else topProductsContainer.innerHTML = topProducts.map((p, i) => `<div class="flex items-center gap-3 bg-navy-900 p-3 rounded-xl border border-navy-700"><div class="w-8 h-8 rounded-lg bg-gold-500/10 text-gold-400 flex items-center justify-center font-bold text-sm">${i + 1}</div><div class="flex-1"><h4 class="text-white font-bold text-sm">${p.name}</h4><p class="text-xs text-slate-400">${p.qty} قطعة</p></div></div>`).join('');
+            else topProductsContainer.innerHTML = topProducts.map((p, i) => {
+                const img = getProductImage(p.id);
+                const thumb = img ? `<img src="${img}" class="w-8 h-8 rounded-lg object-cover border border-navy-700 flex-shrink-0">` : `<div class="w-8 h-8 rounded-lg bg-gold-500/10 text-gold-400 flex items-center justify-center font-bold text-sm flex-shrink-0">${i + 1}</div>`;
+                return `<div class="flex items-center gap-3 bg-navy-900 p-3 rounded-xl border border-navy-700">${thumb}<div class="flex-1"><h4 class="text-white font-bold text-sm">${p.name}</h4><p class="text-xs text-slate-400">${p.qty} قطعة</p></div></div>`;
+            }).join('');
             const recentSales = [...state.invoices].reverse().slice(0, 5);
             const recentSalesContainer = document.getElementById('dashRecentSales');
             if (recentSales.length === 0) recentSalesContainer.innerHTML = '<p class="text-slate-500 text-center text-sm mt-4">لا توجد مبيعات حديثة</p>';
@@ -1567,10 +1790,23 @@
             filtered.forEach(p => {
                 const price = state.settings.isWholesale ? p.wholesalePrice : p.retailPrice;
                 const isLowStock = p.qty <= (p.minLimit || 10);
+                const img = getProductImage(p.id);
+                const imageHtml = img
+                    ? `<img src="${img}" class="w-full h-full object-cover" alt="${p.name}" loading="lazy">`
+                    : `<i class="fa-solid fa-box text-slate-600 text-3xl"></i>`;
                 const div = document.createElement('div');
-                div.className = 'bg-navy-800 rounded-2xl p-4 border border-navy-700 relative flex flex-col items-center justify-between text-center cursor-pointer hover:border-gold-400';
+                div.className = 'bg-navy-800 rounded-2xl p-3 border border-navy-700 relative flex flex-col items-center justify-between text-center cursor-pointer hover:border-gold-400 transition-all';
                 div.onclick = () => addToCart(p.id);
-                div.innerHTML = `${isLowStock ? '<div class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full"></div>' : ''}<div class="w-16 h-16 bg-navy-900 rounded-xl flex items-center justify-center text-slate-600 text-2xl mb-3 border border-navy-700"><i class="fa-solid fa-box"></i></div><h4 class="font-bold text-white text-sm mb-1">${p.name}</h4><p class="text-xs text-slate-400 mb-2">متوفر: ${p.qty}</p><div class="flex justify-between items-center w-full mt-auto"><span class="text-gold-400 font-bold">${formatMoney(price)}</span><span class="bg-navy-900 text-xs text-slate-400 px-2 py-1 rounded border border-navy-700">قطعة</span></div>`;
+                div.innerHTML = `
+                    ${isLowStock ? '<div class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full z-10"></div>' : ''}
+                    <div class="w-full aspect-square bg-navy-900 rounded-xl flex items-center justify-center mb-2 border border-navy-700 overflow-hidden">${imageHtml}</div>
+                    <h4 class="font-bold text-white text-sm mb-1 line-clamp-2">${p.name}</h4>
+                    <p class="text-xs text-slate-400 mb-2">متوفر: ${p.qty}</p>
+                    <div class="flex justify-between items-center w-full mt-auto">
+                        <span class="text-gold-400 font-bold text-sm">${formatMoney(price)}</span>
+                        <span class="bg-navy-900 text-[10px] text-slate-400 px-2 py-1 rounded border border-navy-700">${p.unit || 'قطعة'}</span>
+                    </div>
+                `;
                 container.appendChild(div);
             });
         }
@@ -1609,9 +1845,27 @@
             if (state.cart.length === 0) container.innerHTML = '<p class="text-center text-slate-500 mt-10">السلة فارغة</p>';
             else {
                 state.cart.forEach(item => {
+                    const img = getProductImage(item.id);
+                    const thumb = img
+                        ? `<img src="${img}" class="w-12 h-12 rounded-lg object-cover border border-navy-700 flex-shrink-0" alt="">`
+                        : `<div class="w-12 h-12 rounded-lg bg-navy-800 border border-navy-700 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-box text-slate-500"></i></div>`;
                     const div = document.createElement('div');
                     div.className = 'bg-navy-900 rounded-xl p-3 border border-navy-700 relative mb-3';
-                    div.innerHTML = `<button onclick="removeFromCart(${item.id})" class="absolute top-3 left-3 text-red-500"><i class="fa-solid fa-trash"></i></button><div class="text-right mb-3 pr-8"><h4 class="font-bold text-white text-sm">${item.name}</h4><p class="text-xs text-slate-400 mt-1">${formatMoney(item.price)} × ${item.qty} = <span class="text-gold-400 font-bold">${formatMoney(item.price * item.qty)}</span></p></div><div class="flex items-center justify-between bg-navy-800 rounded-lg p-1 w-1/2 mr-auto border border-navy-700"><button onclick="increaseQty(${item.id})" class="w-8 h-8 rounded bg-gold-500/20 text-gold-400 flex items-center justify-center font-bold">+</button><span class="text-white font-bold text-sm">${item.qty}</span><button onclick="decreaseQty(${item.id})" class="w-8 h-8 rounded bg-navy-700 text-slate-400 flex items-center justify-center font-bold">-</button></div>`;
+                    div.innerHTML = `
+                        <button onclick="removeFromCart(${item.id})" class="absolute top-3 left-3 text-red-500 z-10"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex gap-3 pr-8">
+                            ${thumb}
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-white text-sm truncate">${item.name}</h4>
+                                <p class="text-xs text-slate-400 mt-1">${formatMoney(item.price)} × ${item.qty} = <span class="text-gold-400 font-bold">${formatMoney(item.price * item.qty)}</span></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between bg-navy-800 rounded-lg p-1 w-1/2 mr-auto border border-navy-700 mt-2">
+                            <button onclick="increaseQty(${item.id})" class="w-8 h-8 rounded bg-gold-500/20 text-gold-400 flex items-center justify-center font-bold">+</button>
+                            <span class="text-white font-bold text-sm">${item.qty}</span>
+                            <button onclick="decreaseQty(${item.id})" class="w-8 h-8 rounded bg-navy-700 text-slate-400 flex items-center justify-center font-bold">-</button>
+                        </div>
+                    `;
                     container.appendChild(div);
                 });
             }
@@ -1715,11 +1969,19 @@
                 container.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-slate-500"><i class="fa-solid fa-box-open text-6xl mb-4 opacity-50"></i><p class="text-lg">لا توجد منتجات</p></div>`;
             } else {
                 container.className = 'grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6';
-                container.innerHTML = filtered.map(p => `
+                container.innerHTML = filtered.map(p => {
+                    const img = getProductImage(p.id);
+                    const imageHtml = img
+                        ? `<img src="${img}" class="w-full h-full object-cover" alt="${p.name}" loading="lazy">`
+                        : `<div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-box text-slate-600 text-3xl"></i></div>`;
+                    return `
                     <div class="product-card bg-navy-800 rounded-2xl p-5 border border-navy-700 shadow-lg flex flex-col gap-4 relative">
-                        <div class="product-qty-badge absolute top-4 left-4 w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm">${p.qty}</div>
+                        <div class="product-qty-badge absolute top-4 left-4 w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm z-10">${p.qty}</div>
                         <div class="text-right mt-1"><h3 class="product-name text-xl font-bold text-white mb-1">${p.name}</h3><p class="product-barcode-text text-xs text-slate-400">باركود: ${p.barcode}</p></div>
-                        <div class="barcode-container bg-white p-3 rounded-xl flex items-center justify-center min-h-[80px]"><svg class="barcode-item" data-barcode="${p.barcode}"></svg></div>
+                        <div class="product-image-container relative bg-navy-900 rounded-xl flex items-center justify-center min-h-[110px] overflow-hidden border border-navy-700">
+                            ${imageHtml}
+                            <button type="button" onclick="event.stopPropagation(); showBarcodeModal('${p.barcode}', '${(p.name || '').replace(/'/g, "\\'")}')" class="barcode-btn absolute bottom-1 left-1 w-7 h-7 rounded-lg bg-gold-500/95 hover:bg-gold-500 text-navy-900 flex items-center justify-center shadow-lg z-10" title="عرض / تحميل الباركود"><i class="fa-solid fa-barcode text-xs"></i></button>
+                        </div>
                         <div class="price-grid grid grid-cols-3 gap-2 text-center text-sm">
                             <div class="price-box bg-navy-900 rounded-xl p-3 border border-navy-700"><span class="price-label text-slate-400 text-xs mb-1 block">التكلفة</span><span class="price-value text-white font-bold">${formatMoney(p.cost)}</span></div>
                             <div class="price-box bg-navy-900 rounded-xl p-3 border border-navy-700"><span class="price-label text-slate-400 text-xs mb-1 block">مفرد</span><span class="price-value text-gold-400 font-bold">${formatMoney(p.retailPrice)}</span></div>
@@ -1733,10 +1995,8 @@
                             <div class="unit-qty text-emerald-400 font-bold text-sm">${p.unit || 'قطعة'} ${p.qty}</div>
                         </div>
                     </div>
-                `).join('');
-                if (typeof JsBarcode !== 'undefined') {
-                    document.querySelectorAll('.barcode-item').forEach(svg => { try { JsBarcode(svg, svg.dataset.barcode, { format: 'CODE128', textMargin: 0, fontOptions: 'bold', width: 1.5, height: 40 }); } catch(e) {} });
-                }
+                    `;
+                }).join('');
             }
         }
         function generateBarcode() { document.getElementById('prodBarcode').value = Math.floor(100000000000 + Math.random() * 900000000000).toString(); showToast('تم توليد باركود', 'info'); }
@@ -1756,8 +2016,29 @@
             if (!name || !sku) { showToast('أدخل اسم المنتج و SKU', 'warning'); return; }
             if (!barcode) barcode = Math.floor(100000000000 + Math.random() * 900000000000).toString();
             const isEdit = !!editingProductId;
-            if (isEdit) { const index = state.products.findIndex(p => p.id === editingProductId); if (index !== -1) state.products[index] = { id: editingProductId, name, sku, category, qty, unit, minLimit, cost, retailPrice, wholesalePrice, barcode, notes }; }
-            else state.products.push({ id: Date.now(), name, sku, category, qty, unit, minLimit, cost, retailPrice, wholesalePrice, barcode, notes });
+            let productId;
+            if (isEdit) {
+                productId = editingProductId;
+                const index = state.products.findIndex(p => p.id === editingProductId);
+                if (index !== -1) state.products[index] = { id: editingProductId, name, sku, category, qty, unit, minLimit, cost, retailPrice, wholesalePrice, barcode, notes };
+            } else {
+                productId = Date.now();
+                state.products.push({ id: productId, name, sku, category, qty, unit, minLimit, cost, retailPrice, wholesalePrice, barcode, notes });
+            }
+            // ⭐ حفظ الصورة محلياً ⭐
+            try {
+                if (pendingProductImage === null) {
+                    // المستخدم طلب حذف الصورة
+                    removeProductImage(productId);
+                } else if (typeof pendingProductImage === 'string' && pendingProductImage.length > 0) {
+                    // صورة جديدة
+                    setProductImage(productId, pendingProductImage);
+                }
+                // إذا كانت undefined → لا تغيير (احتفظ بالصورة القديمة عند التعديل)
+            } catch(imgErr) {
+                console.error('Image save error:', imgErr);
+            }
+            pendingProductImage = undefined;
             closeProductModal();
             saveState();
             showToast(isEdit ? `تم تعديل "${name}"` : `تم إضافة "${name}"`, isEdit ? 'edit' : 'success');
@@ -1778,6 +2059,17 @@
             document.getElementById('prodWholesalePrice').value = product.wholesalePrice || 0;
             document.getElementById('prodBarcode').value = product.barcode || '';
             document.getElementById('prodNotes').value = product.notes || '';
+            // ⭐ تحميل الصورة الحالية ⭐
+            pendingProductImage = undefined;
+            const existingImg = getProductImage(id);
+            const preview = document.getElementById('prodImagePreview');
+            const imgInput = document.getElementById('prodImageInput');
+            if (imgInput) imgInput.value = '';
+            if (existingImg) {
+                preview.innerHTML = `<img src="${existingImg}" class="w-full h-full object-cover" alt="preview">`;
+            } else {
+                preview.innerHTML = '<i class="fa-solid fa-image text-slate-500 text-2xl"></i>';
+            }
             document.getElementById('productModalTitle').innerText = 'تعديل المنتج';
             document.getElementById('productSubmitBtn').innerHTML = '<i class="fa-solid fa-save"></i> حفظ التعديلات';
             openModal('addProductModal');
@@ -1786,7 +2078,12 @@
             if (!checkSubscription()) return;
             const product = state.products.find(p => p.id === id);
             if (!product) return;
-            if (confirm(`حذف المنتج "${product.name}"؟`)) { state.products = state.products.filter(p => p.id !== id); saveState(); showToast(`تم حذف "${product.name}"`, 'delete'); }
+            if (confirm(`حذف المنتج "${product.name}"؟`)) {
+                removeProductImage(id); // ⭐ حذف الصورة المحلية
+                state.products = state.products.filter(p => p.id !== id);
+                saveState();
+                showToast(`تم حذف "${product.name}"`, 'delete');
+            }
         }
         function renderSalesLog(filter = '') {
             const container = document.getElementById('salesListContainer');
@@ -2062,7 +2359,11 @@
             closeModal('scannerModal');
             if (targetInput === 'posSearch') {
                 const product = state.products.find(p => p.barcode === decodedText || p.sku === decodedText);
-                if (product) { addToCart(product.id); showToast(`✅ تم إضافة "${product.name}"`, 'success'); }
+                if (product) {
+                    addToCart(product.id);
+                    const img = getProductImage(product.id);
+                    showToast(`✅ تم إضافة "${product.name}"${img ? ' 🖼️' : ''}`, 'success');
+                }
                 else { showToast(`⚠️ لا يوجد منتج بالباركود: ${decodedText}`, 'warning'); }
             } else if (targetInput) {
                 const inputEl = document.getElementById(targetInput);
