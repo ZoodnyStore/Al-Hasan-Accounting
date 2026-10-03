@@ -94,7 +94,6 @@
             #cartItems { max-height: 250px !important; }
             .toast-notification { min-width: auto !important; padding: 12px 16px !important; font-size: 12px !important; }
         }
-        /* Notifications dropdown */
         #notificationsDropdown { display: none; }
         #notificationsDropdown.open { display: flex; }
         .notif-item { transition: all 0.2s; }
@@ -104,12 +103,14 @@
 </head>
 <body>
     <div id="toastContainer" class="fixed top-1/2 left-1/2 z-[10001] flex flex-col items-center gap-3 pointer-events-none" style="transform: translate(-50%, -50%);"></div>
+
     <div id="splash-screen">
         <img src="icon.png" onerror="this.src='https://img.icons8.com/fluency/96/accounting.png'" alt="Logo" class="w-32 h-32 mb-6 rounded-3xl shadow-2xl object-cover">
         <h1 class="text-3xl font-bold text-gold-400 mb-2">الحسن للمحاسبة</h1>
         <p class="text-slate-400 mb-6" id="splashStatus">جاري تحميل النظام...</p>
         <div class="loader"></div>
     </div>
+
     <div id="loginScreen">
         <div class="bg-navy-800 p-8 rounded-2xl w-full max-w-md border border-navy-700 shadow-2xl mx-4 my-8">
             <div class="text-center mb-6">
@@ -137,6 +138,7 @@
             </div>
         </div>
     </div>
+
     <div id="adminPanel">
         <div class="max-w-7xl mx-auto p-4 md:p-6">
             <div class="bg-gradient-to-r from-navy-800 to-navy-700 p-6 rounded-2xl border border-gold-500/30 shadow-xl mb-6">
@@ -170,6 +172,7 @@
             <div id="adminClientsGrid" class="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8"></div>
         </div>
     </div>
+
     <div class="app-container" id="app">
         <div id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
         <aside id="appSidebar" class="w-64 bg-gradient-to-b from-navy-900 to-navy-800 border-l border-navy-700 flex flex-col no-print shadow-2xl z-20">
@@ -229,7 +232,6 @@
                 </div>
             </header>
 
-            <!-- ⭐ قائمة الإشعارات المنسدلة ⭐ -->
             <div id="notificationsDropdown" class="fixed top-20 left-2 right-2 md:left-4 md:right-auto md:w-96 max-h-[70vh] bg-navy-800 border border-navy-700 rounded-2xl shadow-2xl z-[300] flex-col overflow-hidden">
                 <div class="flex items-center justify-between p-4 border-b border-navy-700 bg-navy-900/70">
                     <h3 class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-bell text-gold-400"></i> الإشعارات</h3>
@@ -438,15 +440,30 @@
                         </div>
                         <button onclick="updateCredentials()" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-save"></i> تحديث بيانات الدخول</button>
                     </div>
-                    <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-10">
+                    <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-6">
                         <button onclick="saveSettings(); showToast('تم الحفظ', 'success');" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-6 py-3 rounded-xl shadow-lg flex items-center gap-2"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات</button>
                         <button onclick="resetData()" class="bg-red-900/80 hover:bg-red-800 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> إعادة ضبط البيانات</button>
                         <button onclick="deleteAllData()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-trash"></i> حذف جميع البيانات</button>
+                    </div>
+
+                    <!-- ⭐⭐⭐ قسم حول التطبيق ⭐⭐⭐ -->
+                    <div class="bg-gradient-to-b from-navy-800 to-navy-900 p-8 rounded-2xl border border-gold-500/30 shadow-xl mt-6">
+                        <div class="flex flex-col items-center justify-center text-center">
+                            <img src="icon.png" onerror="this.src='https://img.icons8.com/fluency/96/accounting.png'" alt="Logo" class="w-24 h-24 rounded-3xl shadow-2xl object-cover border-2 border-gold-500/40 mb-5" style="box-shadow: 0 0 40px rgba(250, 204, 21, 0.35);">
+                            <h3 class="text-3xl font-bold text-gold-400 mb-2">الحسن للمحاسبة</h3>
+                            <p class="text-slate-400 text-sm mb-4">نظام محاسبة متكامل للمبيعات والمخزون</p>
+                            <div class="flex items-center gap-3 text-xs text-slate-500">
+                                <span>الإصدار 2.0.0</span>
+                                <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                                <span>© جميع الحقوق محفوظة 2026</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
+
     <div id="addProductModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 backdrop-blur-sm">
         <div class="bg-navy-800 p-6 rounded-2xl w-full max-w-2xl border border-navy-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold text-white" id="productModalTitle">إضافة منتج جديد</h3><button onclick="closeProductModal()" class="text-slate-400 hover:text-white text-2xl">&times;</button></div>
@@ -619,9 +636,6 @@
         </div>
     </div>
     <script>
-        // ============================================================
-        // Firebase Config
-        // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBRmtYWSSaJnmG63Li4gAbaFf1nG7keFKY",
             authDomain: "al-hasan-accounting.firebaseapp.com",
@@ -635,13 +649,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ============================================================
-        // ⭐⭐⭐ دوال مساعدة ⭐⭐⭐
-        // ============================================================
-        function encodeKey(key) {
-            if (!key) return 'unknown';
-            return key.replace(/[.#$\[\]\/@]/g, '_');
-        }
+        function encodeKey(key) { if (!key) return 'unknown'; return key.replace(/[.#$\[\]\/@]/g, '_'); }
         function safeJsonParse(str, fallback) {
             if (str === null || str === undefined) return fallback;
             if (typeof str === 'object') return str;
@@ -666,7 +674,6 @@
             }
             return db.ref('appData/mainState');
         }
-        // ============================================================
 
         const MASTER_KEY = 'ALHASAN-MASTER-2026';
 
@@ -707,7 +714,7 @@
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) { state = parsed; }
             else { state = getFreshDefault(); }
         } catch(e) { state = getFreshDefault(); }
-        
+
         const requiredKeys = ['subscription','adminClients','products','customers','expenses','invoices','cart','settings'];
         requiredKeys.forEach(k => {
             if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) { state[k] = JSON.parse(JSON.stringify(defaultState[k])); }
@@ -731,9 +738,6 @@
         let currentPayDebtCustomerId = null;
         let editingClientId = null;
 
-        // ============================================================
-        // ⭐⭐⭐ نظام الإشعارات ⭐⭐⭐
-        // ============================================================
         const NOTIFICATION_TYPES = {
             welcome: { icon: 'fa-hand-sparkles', color: 'text-blue-400 bg-blue-500/20', title: 'مرحباً بك' },
             subscription_renewed: { icon: 'fa-check-circle', color: 'text-emerald-400 bg-emerald-500/20', title: 'تجديد الاشتراك' },
@@ -747,85 +751,41 @@
 
         function addNotification(type, message, options = {}) {
             if (!Array.isArray(state.notifications)) state.notifications = [];
-            
-            // منع التكرار بناءً على dedupeKey
             if (options.dedupeKey) {
                 const exists = state.notifications.find(n => n.dedupeKey === options.dedupeKey);
                 if (exists) return;
             }
-            
             const notification = {
                 id: 'notif_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-                type: type,
-                message: message,
+                type: type, message: message,
                 date: new Date().toLocaleString('ar-EG'),
-                timestamp: Date.now(),
-                read: false,
+                timestamp: Date.now(), read: false,
                 dedupeKey: options.dedupeKey || null
             };
-            
             state.notifications.unshift(notification);
-            
-            // حد أقصى 100 إشعار
-            if (state.notifications.length > 100) {
-                state.notifications = state.notifications.slice(0, 100);
-            }
-            
-            // حفظ محلي وسحابي
+            if (state.notifications.length > 100) { state.notifications = state.notifications.slice(0, 100); }
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
             saveStateToCloud();
-            
             renderNotifications();
         }
 
         function renderNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
-            
             const unreadCount = state.notifications.filter(n => !n.read).length;
             const badge = document.getElementById('notifBadge');
-            
             if (badge) {
-                if (unreadCount > 0) {
-                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                    badge.classList.remove('hidden');
-                    badge.classList.add('flex');
-                } else {
-                    badge.classList.add('hidden');
-                    badge.classList.remove('flex');
-                }
+                if (unreadCount > 0) { badge.textContent = unreadCount > 99 ? '99+' : unreadCount; badge.classList.remove('hidden'); badge.classList.add('flex'); }
+                else { badge.classList.add('hidden'); badge.classList.remove('flex'); }
             }
-            
             const listEl = document.getElementById('notificationsList');
             if (!listEl) return;
-            
             if (state.notifications.length === 0) {
-                listEl.innerHTML = `<div class="p-10 text-center text-slate-500">
-                    <i class="fa-solid fa-bell-slash text-5xl mb-3 opacity-30"></i>
-                    <p class="text-sm">لا توجد إشعارات حالياً</p>
-                    <p class="text-xs mt-1 opacity-60">ستظهر هنا التنبيهات المهمة</p>
-                </div>`;
+                listEl.innerHTML = `<div class="p-10 text-center text-slate-500"><i class="fa-solid fa-bell-slash text-5xl mb-3 opacity-30"></i><p class="text-sm">لا توجد إشعارات حالياً</p><p class="text-xs mt-1 opacity-60">ستظهر هنا التنبيهات المهمة</p></div>`;
                 return;
             }
-            
             listEl.innerHTML = state.notifications.map(n => {
                 const config = NOTIFICATION_TYPES[n.type] || NOTIFICATION_TYPES.info;
-                return `
-                    <div class="notif-item p-3 border-b border-navy-700 cursor-pointer ${!n.read ? 'unread' : ''}" onclick="markNotificationAsRead('${n.id}')">
-                        <div class="flex gap-3">
-                            <div class="w-9 h-9 rounded-xl ${config.color} flex items-center justify-center flex-shrink-0">
-                                <i class="fa-solid ${config.icon} text-sm"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-start justify-between gap-2 mb-1">
-                                    <h4 class="font-bold text-white text-xs">${config.title}</h4>
-                                    ${!n.read ? '<span class="w-2 h-2 rounded-full bg-gold-400 flex-shrink-0 mt-1"></span>' : ''}
-                                </div>
-                                <p class="text-slate-300 text-xs leading-relaxed break-words">${n.message}</p>
-                                <p class="text-slate-500 text-[10px] mt-1"><i class="fa-regular fa-clock"></i> ${n.date}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                return `<div class="notif-item p-3 border-b border-navy-700 cursor-pointer ${!n.read ? 'unread' : ''}" onclick="markNotificationAsRead('${n.id}')"><div class="flex gap-3"><div class="w-9 h-9 rounded-xl ${config.color} flex items-center justify-center flex-shrink-0"><i class="fa-solid ${config.icon} text-sm"></i></div><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-2 mb-1"><h4 class="font-bold text-white text-xs">${config.title}</h4>${!n.read ? '<span class="w-2 h-2 rounded-full bg-gold-400 flex-shrink-0 mt-1"></span>' : ''}</div><p class="text-slate-300 text-xs leading-relaxed break-words">${n.message}</p><p class="text-slate-500 text-[10px] mt-1"><i class="fa-regular fa-clock"></i> ${n.date}</p></div></div></div>`;
             }).join('');
         }
 
@@ -870,7 +830,6 @@
             }
         }
 
-        // إغلاق قائمة الإشعارات عند الضغط خارجها
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('notificationsDropdown');
             const bell = document.getElementById('notificationBell');
@@ -879,75 +838,44 @@
             dropdown.classList.remove('open');
         });
 
-        // ⭐ توليد الإشعارات التلقائية
         function generateAutoNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
-            
             const username = sessionStorage.getItem('alhasan_client_username') || 'admin';
             const isAdmin = !isClientUser();
-            
-            // 1. إشعار ترحيبي عند الدخول لأول مرة (يُحفظ في localStorage لكل مستخدم)
             const welcomeKey = 'alhasan_welcomed_' + username;
             if (!localStorage.getItem(welcomeKey)) {
-                if (isAdmin) {
-                    addNotification('welcome', `أهلاً وسهلاً بك في تطبيق الحسن للمحاسبة! نحن سعداء بوجودك معنا.`, { dedupeKey: 'welcome_' + username });
-                } else {
-                    const storeName = state.settings.storeName || 'متجرك';
-                    addNotification('welcome', `أهلاً وسهلاً بك في تطبيق الحسن للمحاسبة! نتمنى لك تجربة ممتعة مع إدارة ${storeName}.`, { dedupeKey: 'welcome_' + username });
-                }
+                if (isAdmin) { addNotification('welcome', `أهلاً وسهلاً بك في تطبيق الحسن للمحاسبة! نحن سعداء بوجودك معنا.`, { dedupeKey: 'welcome_' + username }); }
+                else { const storeName = state.settings.storeName || 'متجرك'; addNotification('welcome', `أهلاً وسهلاً بك في تطبيق الحسن للمحاسبة! نتمنى لك تجربة ممتعة مع إدارة ${storeName}.`, { dedupeKey: 'welcome_' + username }); }
                 localStorage.setItem(welcomeKey, 'true');
             }
-            
-            // 2. إشعارات الاشتراك
             if (state.subscription && state.subscription.endDate) {
                 const daysLeft = getDaysRemaining();
                 const endDate = state.subscription.endDate;
-                
-                if (daysLeft <= 0) {
-                    addNotification('subscription_expired', `⚠️ انتهى اشتراكك بتاريخ ${endDate}. يرجى التواصل مع المزود على الرقم ${state.subscription.providerPhone || '-'} للتجديد.`, { dedupeKey: 'sub_expired_' + endDate });
-                } else if (daysLeft <= 3) {
-                    addNotification('subscription_expiring', `🚨 اشتراكك سينتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'} فقط! (${endDate}). يرجى التجديد فوراً.`, { dedupeKey: 'sub_expiring3_' + endDate });
-                } else if (daysLeft <= 7) {
-                    addNotification('subscription_expiring', `⚠️ اشتراكك سينتهي خلال ${daysLeft} أيام (${endDate}). يرجى التجديد قريباً.`, { dedupeKey: 'sub_expiring7_' + endDate });
-                } else if (daysLeft <= 15) {
-                    addNotification('subscription_expiring', `📅 تنبيه: اشتراكك سينتهي خلال ${daysLeft} يوم (${endDate}).`, { dedupeKey: 'sub_expiring15_' + endDate });
-                }
+                if (daysLeft <= 0) { addNotification('subscription_expired', `⚠️ انتهى اشتراكك بتاريخ ${endDate}. يرجى التواصل مع المزود على الرقم ${state.subscription.providerPhone || '-'} للتجديد.`, { dedupeKey: 'sub_expired_' + endDate }); }
+                else if (daysLeft <= 3) { addNotification('subscription_expiring', `🚨 اشتراكك سينتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'} فقط! (${endDate}). يرجى التجديد فوراً.`, { dedupeKey: 'sub_expiring3_' + endDate }); }
+                else if (daysLeft <= 7) { addNotification('subscription_expiring', `⚠️ اشتراكك سينتهي خلال ${daysLeft} أيام (${endDate}). يرجى التجديد قريباً.`, { dedupeKey: 'sub_expiring7_' + endDate }); }
+                else if (daysLeft <= 15) { addNotification('subscription_expiring', `📅 تنبيه: اشتراكك سينتهي خلال ${daysLeft} يوم (${endDate}).`, { dedupeKey: 'sub_expiring15_' + endDate }); }
             }
-            
-            // 3. إشعارات تجديد الاشتراك (فقط للعملاء)
             if (isClientUser()) {
                 const lastEndKey = 'alhasan_last_end_' + username;
                 const lastKnownEnd = localStorage.getItem(lastEndKey);
                 const currentEnd = state.subscription.endDate;
-                if (lastKnownEnd && currentEnd && currentEnd > lastKnownEnd) {
-                    addNotification('subscription_renewed', `✅ تم تجديد اشتراكك بنجاح! تاريخ الانتهاء الجديد: ${currentEnd}`, { dedupeKey: 'renewed_' + currentEnd });
-                }
+                if (lastKnownEnd && currentEnd && currentEnd > lastKnownEnd) { addNotification('subscription_renewed', `✅ تم تجديد اشتراكك بنجاح! تاريخ الانتهاء الجديد: ${currentEnd}`, { dedupeKey: 'renewed_' + currentEnd }); }
                 if (currentEnd) localStorage.setItem(lastEndKey, currentEnd);
             }
-            
-            // 4. إشعارات المخزون
             state.products.forEach(p => {
-                if (p.qty <= 0) {
-                    addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون! يُنصح بإعادة التخزين.`, { dedupeKey: 'out_' + p.id });
-                } else if (p.qty <= (p.minLimit || 10)) {
-                    addNotification('low_stock', `⚠️ المنتج "${p.name}" قارب على النفاذ (المتبقي: ${p.qty} فقط).`, { dedupeKey: 'low_' + p.id + '_' + p.qty });
-                }
+                if (p.qty <= 0) { addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون! يُنصح بإعادة التخزين.`, { dedupeKey: 'out_' + p.id }); }
+                else if (p.qty <= (p.minLimit || 10)) { addNotification('low_stock', `⚠️ المنتج "${p.name}" قارب على النفاذ (المتبقي: ${p.qty} فقط).`, { dedupeKey: 'low_' + p.id + '_' + p.qty }); }
             });
-            
             renderNotifications();
         }
 
-        // ⭐ فحص المخزون بعد البيع أو التعديل
         function checkStockNotifications() {
             state.products.forEach(p => {
-                if (p.qty <= 0) {
-                    addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون!`, { dedupeKey: 'out_' + p.id });
-                } else if (p.qty <= (p.minLimit || 10)) {
-                    addNotification('low_stock', `⚠️ المنتج "${p.name}" قارب على النفاذ (المتبقي: ${p.qty}).`, { dedupeKey: 'low_' + p.id + '_' + p.qty });
-                }
+                if (p.qty <= 0) { addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون!`, { dedupeKey: 'out_' + p.id }); }
+                else if (p.qty <= (p.minLimit || 10)) { addNotification('low_stock', `⚠️ المنتج "${p.name}" قارب على النفاذ (المتبقي: ${p.qty}).`, { dedupeKey: 'low_' + p.id + '_' + p.qty }); }
             });
         }
-        // ============================================================
 
         function saveStateToCloud() {
             try {
@@ -965,16 +893,14 @@
             }
             return loadMainState();
         }
-        
+
         function loadMainState() {
             return db.ref('appData/mainState').once('value').then((snapshot) => {
                 const raw = snapshot.val();
                 const cloudData = normalizeCloudData(raw);
                 if (cloudData && typeof cloudData === 'object') {
                     state = cloudData;
-                    requiredKeys.forEach(k => {
-                        if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) { state[k] = JSON.parse(JSON.stringify(defaultState[k])); }
-                    });
+                    requiredKeys.forEach(k => { if (!state[k] || (k !== 'settings' && k !== 'subscription' && !Array.isArray(state[k]))) { state[k] = JSON.parse(JSON.stringify(defaultState[k])); } });
                     if (!Array.isArray(state.notifications)) state.notifications = [];
                     if (!state.subscription || typeof state.subscription !== 'object') state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
                     if (!state.settings || typeof state.settings !== 'object') state.settings = JSON.parse(JSON.stringify(defaultState.settings));
@@ -993,7 +919,7 @@
                 }
             }).catch((error) => { console.error('❌ خطأ في تحميل mainState:', error); return false; });
         }
-        
+
         function loadClientData(encodedUsername) {
             return db.ref('appData/clientData/' + encodedUsername).once('value').then((snapshot) => {
                 const raw = snapshot.val();
@@ -1045,9 +971,7 @@
             const password = document.getElementById('loginPassword').value;
             const errorBox = document.getElementById('loginError');
             const errorText = document.getElementById('loginErrorText');
-            
             if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
-            
             if (username === state.subscription.username && password === state.subscription.password) {
                 sessionStorage.setItem('alhasan_logged_in', 'true');
                 sessionStorage.setItem('alhasan_user_type', 'admin');
@@ -1058,10 +982,8 @@
                 startApp();
                 return;
             }
-            
             const clients = Array.isArray(state.adminClients) ? state.adminClients : [];
             const client = clients.find(c => (c.username || 'admin') === username && (c.password || 'admin123') === password);
-            
             if (client) {
                 const daysLeft = getClientDaysLeft(client.endDate);
                 if (daysLeft <= 0) {
@@ -1070,26 +992,20 @@
                     showToast('❌ اشتراكك منتهي!', 'warning');
                     return;
                 }
-                
                 const encodedUsername = encodeKey(username);
-                
                 sessionStorage.setItem('alhasan_logged_in', 'true');
                 sessionStorage.setItem('alhasan_user_type', 'client');
                 sessionStorage.setItem('alhasan_client_username', username);
                 sessionStorage.setItem('alhasan_client_db_key', encodedUsername);
                 sessionStorage.setItem('alhasan_client_id', client.id);
-                
                 await loadClientData(encodedUsername);
-                
                 state.subscription = { startDate: client.startDate, endDate: client.endDate, username: client.username, password: client.password, providerPhone: state.subscription.providerPhone || '' };
-                
                 if (!state.settings.storeName || state.settings.storeName === 'الحسن للمحاسبة') {
                     state.settings.storeName = client.store || 'متجري';
                     state.settings.phone = client.phone || state.settings.phone;
                     state.settings.address = client.city || state.settings.address;
                 }
                 saveStateToCloud();
-                
                 errorBox.classList.add('hidden');
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('loginPassword').value = '';
@@ -1097,7 +1013,6 @@
                 startApp();
                 return;
             }
-            
             errorBox.classList.remove('hidden');
             errorText.innerText = 'اسم المستخدم أو كلمة المرور غير صحيحة';
             showToast('❌ بيانات الدخول غير صحيحة', 'warning');
@@ -1138,11 +1053,9 @@
                 sessionStorage.removeItem('alhasan_client_id');
                 sessionStorage.removeItem('alhasan_logged_in');
                 sessionStorage.setItem('alhasan_master_logged_in', 'true');
-                
                 closeModal('masterLoginModal');
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('adminPanel').classList.add('active');
-                
                 loadMainState().then(() => { renderAdminPanel(); });
                 showToast('👑 مرحباً بك في لوحة المدير', 'success');
             } else {
@@ -1159,11 +1072,7 @@
             }
         }
 
-        function renderAdminPanel() {
-            console.log('📋 عرض لوحة المدير، عدد المشتركين:', (state.adminClients || []).length);
-            renderAdminStats();
-            renderAdminClients();
-        }
+        function renderAdminPanel() { renderAdminStats(); renderAdminClients(); }
 
         function renderAdminStats() {
             const clients = Array.isArray(state.adminClients) ? state.adminClients : [];
@@ -1223,28 +1132,7 @@
                 else { statusBadge = `نشط (${days} يوم)`; statusColor = 'text-emerald-400 bg-emerald-500/20'; borderColor = 'border-navy-700'; }
                 const firstLetter = (c.name || '؟').trim().charAt(0);
                 const avatarColor = avatarColors[index % avatarColors.length];
-                return `
-                    <div class="bg-navy-800 rounded-2xl p-5 border-2 ${borderColor} shadow-lg relative flex flex-col">
-                        <div class="absolute top-4 left-4 flex gap-2">
-                            <button onclick="editClient(${c.id})" class="w-8 h-8 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-pen text-sm"></i></button>
-                            <button onclick="deleteClient(${c.id})" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash text-sm"></i></button>
-                        </div>
-                        <div class="flex items-center gap-3 mb-4 pl-20">
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0" style="background: ${avatarColor}">${firstLetter}</div>
-                            <div class="flex-1 min-w-0"><h3 class="text-white font-bold text-lg truncate">${c.name || '-'}</h3><p class="text-gold-400 text-xs truncate">${c.store || ''}</p></div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 mb-3">
-                            <div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">البداية</div><div class="text-white font-bold text-xs">${c.startDate || '-'}</div></div>
-                            <div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">النهاية</div><div class="text-gold-400 font-bold text-xs">${c.endDate || '-'}</div></div>
-                        </div>
-                        <div class="flex justify-center mb-3"><span class="inline-block px-3 py-1 rounded-lg text-xs font-bold ${statusColor}">${statusBadge}</span></div>
-                        ${c.payment ? `<div class="flex justify-between items-center text-xs py-2 border-t border-navy-700"><span class="text-slate-400"><i class="fa-solid fa-coins text-gold-400"></i> قيمة الاشتراك</span><span class="text-gold-400 font-bold">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(c.payment)}</span></div>` : ''}
-                        <div class="mt-3 flex gap-2">
-                            <button onclick="extendClient(${c.id})" class="flex-1 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1 border border-gold-500/30"><i class="fa-solid fa-plus"></i> تمديد</button>
-                            <button onclick="copyClientCredentials(${c.id})" class="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1 border border-blue-500/30"><i class="fa-solid fa-copy"></i> نسخ الدخول</button>
-                        </div>
-                    </div>
-                `;
+                return `<div class="bg-navy-800 rounded-2xl p-5 border-2 ${borderColor} shadow-lg relative flex flex-col"><div class="absolute top-4 left-4 flex gap-2"><button onclick="editClient(${c.id})" class="w-8 h-8 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-pen text-sm"></i></button><button onclick="deleteClient(${c.id})" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash text-sm"></i></button></div><div class="flex items-center gap-3 mb-4 pl-20"><div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0" style="background: ${avatarColor}">${firstLetter}</div><div class="flex-1 min-w-0"><h3 class="text-white font-bold text-lg truncate">${c.name || '-'}</h3><p class="text-gold-400 text-xs truncate">${c.store || ''}</p></div></div><div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">البداية</div><div class="text-white font-bold text-xs">${c.startDate || '-'}</div></div><div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">النهاية</div><div class="text-gold-400 font-bold text-xs">${c.endDate || '-'}</div></div></div><div class="flex justify-center mb-3"><span class="inline-block px-3 py-1 rounded-lg text-xs font-bold ${statusColor}">${statusBadge}</span></div>${c.payment ? `<div class="flex justify-between items-center text-xs py-2 border-t border-navy-700"><span class="text-slate-400"><i class="fa-solid fa-coins text-gold-400"></i> قيمة الاشتراك</span><span class="text-gold-400 font-bold">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(c.payment)}</span></div>` : ''}<div class="mt-3 flex gap-2"><button onclick="extendClient(${c.id})" class="flex-1 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1 border border-gold-500/30"><i class="fa-solid fa-plus"></i> تمديد</button><button onclick="copyClientCredentials(${c.id})" class="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1 border border-blue-500/30"><i class="fa-solid fa-copy"></i> نسخ الدخول</button></div></div>`;
             }).join('');
         }
 
@@ -1295,34 +1183,20 @@
             const endDate = document.getElementById('clientEndDate').value;
             const payment = parseFloat(document.getElementById('clientPayment').value) || 0;
             const notes = document.getElementById('clientNotes').value.trim();
-
-            if (!name || !store || !endDate) {
-                showToast('⚠️ الرجاء إدخال اسم العميل واسم المتجر وتاريخ الانتهاء', 'warning');
-                return;
-            }
+            if (!name || !store || !endDate) { showToast('⚠️ الرجاء إدخال اسم العميل واسم المتجر وتاريخ الانتهاء', 'warning'); return; }
             if (!Array.isArray(state.adminClients)) state.adminClients = [];
-
             const isEdit = !!editingClientId;
-            const targetUsername = username;
-            const encodedUsername = encodeKey(targetUsername);
-
+            const encodedUsername = encodeKey(username);
             if (isEdit) {
                 const index = state.adminClients.findIndex(c => c.id === editingClientId);
-                if (index !== -1) {
-                    state.adminClients[index] = { id: editingClientId, name, store, phone, city, username, password, startDate, endDate, payment, notes };
-                }
+                if (index !== -1) { state.adminClients[index] = { id: editingClientId, name, store, phone, city, username, password, startDate, endDate, payment, notes }; }
             } else {
                 state.adminClients.push({ id: Date.now(), name, store, phone, city, username, password, startDate, endDate, payment, notes });
             }
-
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
-
             const mainRef = db.ref('appData/mainState');
             const dataToSave = JSON.parse(JSON.stringify(state));
-            
             mainRef.set(dataToSave).then(() => {
-                console.log('✅ تم حفظ المشترك في mainState. العدد:', state.adminClients.length);
-                
                 if (!isEdit) {
                     const clientRef = db.ref('appData/clientData/' + encodedUsername);
                     const clientInitialState = getFreshDefault();
@@ -1333,27 +1207,12 @@
                     clientInitialState.settings.exchangeRate = state.settings.exchangeRate;
                     clientInitialState.settings.oldExchangeRate = state.settings.oldExchangeRate;
                     clientInitialState.subscription = { startDate: startDate, endDate: endDate, username: username, password: password, providerPhone: state.subscription.providerPhone || '' };
-                    clientRef.set(clientInitialState).then(() => {
-                        console.log('✅ تم إنشاء مساحة بيانات العميل:', encodedUsername);
-                        showToast(`✅ تم إضافة "${name}" - يمكنه الدخول بـ ${username}`, 'success');
-                    }).catch(err => {
-                        console.error('خطأ في إنشاء مساحة العميل:', err);
-                        showToast(`✅ تم إضافة "${name}" (تحذير: تأخر إنشاء بياناته)`, 'warning');
-                    });
-                } else {
-                    showToast(`✅ تم تعديل بيانات "${name}"`, 'success');
-                }
-
+                    clientRef.set(clientInitialState).then(() => { showToast(`✅ تم إضافة "${name}" - يمكنه الدخول بـ ${username}`, 'success'); }).catch(err => { showToast(`✅ تم إضافة "${name}" (تحذير: تأخر إنشاء بياناته)`, 'warning'); });
+                } else { showToast(`✅ تم تعديل بيانات "${name}"`, 'success'); }
                 closeModal('addClientModal');
                 editingClientId = null;
                 renderAdminPanel();
-            }).catch(err => {
-                console.error('❌ فشل الحفظ في Firebase:', err);
-                showToast('❌ فشل الحفظ في السحابة. تحقق من الإنترنت', 'error');
-                closeModal('addClientModal');
-                editingClientId = null;
-                renderAdminPanel();
-            });
+            }).catch(err => { showToast('❌ فشل الحفظ في السحابة. تحقق من الإنترنت', 'error'); closeModal('addClientModal'); editingClientId = null; renderAdminPanel(); });
         }
 
         function deleteClient(id) {
@@ -1361,8 +1220,7 @@
             if (!client) return;
             if (confirm(`هل أنت متأكد من حذف المشترك "${client.name}"؟`)) {
                 state.adminClients = state.adminClients.filter(c => c.id !== id);
-                saveState();
-                renderAdminPanel();
+                saveState(); renderAdminPanel();
                 showToast(`🗑️ تم حذف "${client.name}"`, 'delete');
             }
         }
@@ -1380,8 +1238,7 @@
             const startFrom = baseDate > now ? baseDate : now;
             startFrom.setDate(startFrom.getDate() + numDays);
             client.endDate = startFrom.toISOString().slice(0, 10);
-            saveState();
-            renderAdminPanel();
+            saveState(); renderAdminPanel();
             showToast(`✅ تم التمديد حتى ${client.endDate}`, 'success');
         }
 
@@ -1465,7 +1322,6 @@
             document.getElementById('dashLastUpdate').innerText = todayDate;
             updateSubscriptionUI();
             renderAll();
-            // ⭐ توليد الإشعارات التلقائية بعد تحميل التطبيق
             setTimeout(() => { try { generateAutoNotifications(); } catch(e) { console.error('Notification error:', e); } }, 800);
         }
 
@@ -1787,7 +1643,6 @@
             renderPOSProducts();
             renderPosCategories();
             renderCustomers();
-            // ⭐ فحص المخزون بعد البيع
             setTimeout(() => { try { checkStockNotifications(); } catch(e) {} }, 500);
         }
         function showReceipt(invoice) {
@@ -1971,28 +1826,7 @@
                     const debt = c.creditLimit || 0;
                     const debtColor = debt <= 0 ? 'text-red-400' : (debt < 50 ? 'text-orange-400' : 'text-emerald-400');
                     const debtStatus = debt <= 0 ? 'نفذ ❌' : (debt < 50 ? 'قارب على النفاذ ⚠️' : 'متاح ✅');
-                    return `
-                        <div class="bg-navy-800 rounded-2xl p-5 border border-navy-700 shadow-lg relative flex flex-col">
-                            <div class="absolute top-4 left-4 flex gap-2">
-                                <button onclick="deleteCustomer(${c.id})" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash text-sm"></i></button>
-                                <button onclick="editCustomer(${c.id})" class="w-8 h-8 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-pen text-sm"></i></button>
-                            </div>
-                            <div class="flex items-center gap-3 mb-4 pl-20">
-                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0" style="background: ${avatarColor}">${firstLetter}</div>
-                                <div class="flex-1 min-w-0"><h3 class="text-white font-bold text-lg truncate">${c.name}</h3><span class="inline-block px-2 py-0.5 rounded-md text-xs font-bold mt-1 ${typeClass}">${typeLabel}</span></div>
-                            </div>
-                            <div class="space-y-2 text-sm mb-4">
-                                ${c.phone ? `<div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-phone text-slate-500 w-4 text-center"></i><span dir="ltr">${c.phone}</span></div>` : ''}
-                                ${c.address ? `<div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-location-dot text-slate-500 w-4 text-center"></i><span class="truncate">${c.address}</span></div>` : ''}
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 mb-3">
-                                <div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">المشتريات</div><div class="text-emerald-400 font-bold text-sm">${formatMoney(purchases)}</div></div>
-                                <div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">حد الدين</div><div class="${debtColor} font-bold text-sm">${formatMoney(debt)}</div></div>
-                            </div>
-                            <div class="flex justify-between items-center text-xs py-2 border-t border-navy-700 mb-3"><span class="text-slate-400">حالة حد الدين</span><span class="${debtColor} font-bold">${debtStatus}</span></div>
-                            <button onclick="openPayDebtModal(${c.id})" class="w-full bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 font-bold text-sm py-2.5 rounded-lg flex items-center justify-center gap-2 border border-gold-500/30"><i class="fa-solid fa-money-bill-wave"></i> تسديد دفعة</button>
-                        </div>
-                    `;
+                    return `<div class="bg-navy-800 rounded-2xl p-5 border border-navy-700 shadow-lg relative flex flex-col"><div class="absolute top-4 left-4 flex gap-2"><button onclick="deleteCustomer(${c.id})" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash text-sm"></i></button><button onclick="editCustomer(${c.id})" class="w-8 h-8 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-pen text-sm"></i></button></div><div class="flex items-center gap-3 mb-4 pl-20"><div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0" style="background: ${avatarColor}">${firstLetter}</div><div class="flex-1 min-w-0"><h3 class="text-white font-bold text-lg truncate">${c.name}</h3><span class="inline-block px-2 py-0.5 rounded-md text-xs font-bold mt-1 ${typeClass}">${typeLabel}</span></div></div><div class="space-y-2 text-sm mb-4">${c.phone ? `<div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-phone text-slate-500 w-4 text-center"></i><span dir="ltr">${c.phone}</span></div>` : ''}${c.address ? `<div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-location-dot text-slate-500 w-4 text-center"></i><span class="truncate">${c.address}</span></div>` : ''}</div><div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">المشتريات</div><div class="text-emerald-400 font-bold text-sm">${formatMoney(purchases)}</div></div><div class="bg-navy-900 rounded-xl p-3 border border-navy-700 text-center"><div class="text-slate-400 text-xs mb-1">حد الدين</div><div class="${debtColor} font-bold text-sm">${formatMoney(debt)}</div></div></div><div class="flex justify-between items-center text-xs py-2 border-t border-navy-700 mb-3"><span class="text-slate-400">حالة حد الدين</span><span class="${debtColor} font-bold">${debtStatus}</span></div><button onclick="openPayDebtModal(${c.id})" class="w-full bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 font-bold text-sm py-2.5 rounded-lg flex items-center justify-center gap-2 border border-gold-500/30"><i class="fa-solid fa-money-bill-wave"></i> تسديد دفعة</button></div>`;
                 }).join('');
             }
         }
@@ -2160,7 +1994,6 @@
             }, 100);
         }
 
-        // ⭐⭐⭐ قارئ الباركود المُحسّن ⭐⭐⭐
         let html5QrCode = null;
         let scannerActive = false;
         let lastScannedText = '';
@@ -2181,15 +2014,7 @@
             readerEl.innerHTML = '';
             try {
                 html5QrCode = new Html5Qrcode("reader", { verbose: false });
-                const config = {
-                    fps: 30,
-                    qrbox: function(viewfinderWidth, viewfinderHeight) {
-                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                        const boxSize = Math.floor(minEdge * 0.8);
-                        return { width: boxSize, height: Math.floor(boxSize * 0.7) };
-                    },
-                    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-                };
+                const config = { fps: 30, qrbox: function(viewfinderWidth, viewfinderHeight) { const minEdge = Math.min(viewfinderWidth, viewfinderHeight); const boxSize = Math.floor(minEdge * 0.8); return { width: boxSize, height: Math.floor(boxSize * 0.7) }; }, experimentalFeatures: { useBarCodeDetectorIfSupported: true } };
                 await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
                 console.log('✅ الكاميرا تعمل بنجاح');
             } catch (err) {
@@ -2215,9 +2040,7 @@
             scannerActive = false;
             if (navigator.vibrate) { try { navigator.vibrate(80); } catch(e) {} }
             if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    if (html5QrCode) { try { html5QrCode.clear(); } catch(e) {} html5QrCode = null; }
-                }).catch(err => { console.warn('خطأ إيقاف الكاميرا:', err); html5QrCode = null; });
+                html5QrCode.stop().then(() => { if (html5QrCode) { try { html5QrCode.clear(); } catch(e) {} html5QrCode = null; } }).catch(err => { console.warn('خطأ إيقاف الكاميرا:', err); html5QrCode = null; });
             }
             closeModal('scannerModal');
             if (targetInput === 'posSearch') {
@@ -2279,13 +2102,6 @@
             reader.readAsText(file);
         }
 
-        // ============================================================
-        // ⭐⭐⭐ الدخول السري للمزود ⭐⭐⭐
-        // 1) 10 نقرات سريعة على الشعار (خلال ثانيتين)
-        // 2) ضغط مطوّل 3 ثواني على الشعار
-        // 3) ضغط مطوّل 3 ثواني على نص الحقوق
-        // 4) اختصار Ctrl+Shift+M للكمبيوتر
-        // ============================================================
         (function initHiddenMasterAccess() {
             let logoTapCount = 0;
             let logoTapTimer = null;
@@ -2301,7 +2117,6 @@
             const logo = document.getElementById('loginLogo');
             const copyright = document.getElementById('loginCopyright');
 
-            // ---------- 1) 10 نقرات سريعة على الشعار ----------
             if (logo) {
                 logo.addEventListener('click', function (e) {
                     if (suppressLogoTaps) return;
@@ -2315,7 +2130,6 @@
                     }
                 });
 
-                // ---------- 2) ضغط مطوّل 3 ثواني على الشعار ----------
                 const startLogoLong = () => {
                     clearTimeout(logoLongPressTimer);
                     logoLongPressTimer = setTimeout(() => {
@@ -2335,7 +2149,6 @@
                 logo.addEventListener('mouseleave', cancelLogoLong);
             }
 
-            // ---------- 3) ضغط مطوّل 3 ثواني على نص الحقوق ----------
             if (copyright) {
                 const startCpLong = () => {
                     clearTimeout(copyrightLongPressTimer);
@@ -2352,7 +2165,6 @@
                 copyright.addEventListener('mouseleave', cancelCpLong);
             }
 
-            // ---------- 4) اختصار Ctrl+Shift+M ----------
             document.addEventListener('keydown', function (e) {
                 if (e.ctrlKey && e.shiftKey && (e.key === 'M' || e.key === 'm')) {
                     e.preventDefault();
