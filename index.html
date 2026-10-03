@@ -15,46 +15,9 @@
     <meta name="description" content="نظام محاسبة متكامل للمبيعات والمخزون">
     <link rel="apple-touch-icon" href="icon.png">
 
-    <!-- ⭐⭐⭐ PWA Manifest (يُولَّد ديناميكياً كـ Blob) ⭐⭐⭐ -->
-    <script>
-        (function generatePWAManifest() {
-            try {
-                const manifestData = {
-                    "name": "الحسن للمحاسبة",
-                    "short_name": "الحسن",
-                    "description": "نظام محاسبة متكامل للمبيعات والمخزون",
-                    "start_url": "./",
-                    "scope": "./",
-                    "display": "standalone",
-                    "orientation": "portrait",
-                    "background_color": "#0a1120",
-                    "theme_color": "#0a1120",
-                    "lang": "ar",
-                    "dir": "rtl",
-                    "categories": ["business", "finance", "productivity"],
-                    "icons": [
-                        { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-                        { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-                        { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-                    ]
-                };
-                const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/manifest+json' });
-                const manifestURL = URL.createObjectURL(blob);
-                const link = document.createElement('link');
-                link.rel = 'manifest';
-                link.href = manifestURL;
-                document.head.appendChild(link);
-                console.log('✅ PWA Manifest created dynamically');
-            } catch (e) {
-                console.warn('⚠️ Manifest generation failed:', e);
-                const link = document.createElement('link');
-                link.rel = 'manifest';
-                link.href = 'manifest.json';
-                document.head.appendChild(link);
-            }
-        })();
-    </script>
-    <!-- ⭐⭐⭐ نهاية إعداد PWA ⭐⭐⭐ -->
+    <!-- ⭐⭐⭐ PWA Manifest ⭐⭐⭐ -->
+<link rel="manifest" href="manifest.json">
+<!-- ⭐⭐⭐ نهاية إعداد PWA ⭐⭐⭐ -->
 
     <link rel="icon" type="image/png" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
