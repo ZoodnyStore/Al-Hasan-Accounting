@@ -1,8 +1,16 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.zoodnystore.twa",
-        "sha256_cert_fingerprints": ["59:D8:E7:F8:F9:5E:3C:78:6F:D2:DF:74:AF:5D:6A:CA:15:55:C1:79:20:00:E4:26:6C:D7:CB:A4:9E:E7:93:84"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.alhasan.accounting",
+    "sha256_cert_fingerprints": ["59:D8:E7:F8:F9:5E:3C:78:6F:D2:DF:74:AF:5D:6A:CA:15:55:C1:79:20:00:E4:26:6C:D7:CB:A4:9E:E7:93:84"]
+  }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.zoodnystore.twa",
+    "sha256_cert_fingerprints": ["59:D8:E7:F8:F9:5E:3C:78:6F:D2:DF:74:AF:5D:6A:CA:15:55:C1:79:20:00:E4:26:6C:D7:CB:A4:9E:E7:93:84"]
+  }
+}]
