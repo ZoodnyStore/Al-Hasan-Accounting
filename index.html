@@ -84,6 +84,7 @@
             .stat-card .text-2xl { font-size: 1rem !important; }
             .stat-card .text-sm { font-size: 0.65rem !important; }
             .stat-card .text-xs { font-size: 0.6rem !important; }
+            #posProductList, #inventoryListContainer, #customersListContainer, #expensesListContainer, #adminClientsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
             #salesListContainer { overflow-x: auto !important; }
             #salesListContainer > table { min-width: 800px; }
             .grid.gap-4 { gap: 8px !important; }
@@ -92,358 +93,13 @@
             #pos .flex-1.overflow-y-auto { max-height: 45vh !important; }
             #cartItems { max-height: 250px !important; }
             .toast-notification { min-width: auto !important; padding: 12px 16px !important; font-size: 12px !important; }
-
-            /* =====================================================
-               ⭐⭐⭐ بطاقات المنتجات - تنسيق مصغّر ومضبوط للهاتف ⭐⭐⭐
-               ===================================================== */
-
-            /* الشبكة: عمودان */
-            #inventoryListContainer {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 6px !important;
-            }
-
-            /* البطاقة نفسها */
-            #inventoryListContainer > div {
-                padding: 8px !important;
-                gap: 6px !important;
-                border-radius: 12px !important;
-                overflow: hidden !important;
-                min-width: 0 !important;
-            }
-
-            /* شارة الكمية (الزاوية العلوية) */
-            #inventoryListContainer > div > .absolute {
-                width: 22px !important;
-                height: 22px !important;
-                font-size: 9px !important;
-                top: 5px !important;
-                left: 5px !important;
-                border-radius: 6px !important;
-            }
-
-            /* اسم المنتج */
-            #inventoryListContainer h3 {
-                font-size: 0.72rem !important;
-                line-height: 1.15 !important;
-                margin-bottom: 2px !important;
-                word-break: break-word !important;
-                overflow-wrap: break-word !important;
-                max-width: 100% !important;
-                padding-left: 24px !important;
-            }
-
-            /* سطر الباركود (الرقم تحت الاسم) */
-            #inventoryListContainer p {
-                font-size: 0.5rem !important;
-                word-break: break-all !important;
-                line-height: 1.1 !important;
-                max-width: 100% !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                white-space: nowrap !important;
-            }
-
-            /* صندوق الباركود الأبيض */
-            #inventoryListContainer .bg-white {
-                padding: 3px !important;
-                min-height: 38px !important;
-                max-height: 48px !important;
-                border-radius: 8px !important;
-                overflow: hidden !important;
-            }
-            #inventoryListContainer .bg-white svg {
-                max-height: 40px !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                display: block !important;
-            }
-
-            /* الشبكة الثلاثية (التكلفة/مفرد/جملة) */
-            #inventoryListContainer .grid.grid-cols-3 {
-                gap: 3px !important;
-            }
-            #inventoryListContainer .grid.grid-cols-3 > div {
-                padding: 3px 1px !important;
-                border-radius: 6px !important;
-                min-width: 0 !important;
-                overflow: hidden !important;
-                border-width: 1px !important;
-            }
-            #inventoryListContainer .grid.grid-cols-3 span:first-child {
-                font-size: 0.45rem !important;
-                margin-bottom: 0px !important;
-                line-height: 1 !important;
-                display: block !important;
-            }
-            #inventoryListContainer .grid.grid-cols-3 span:last-child {
-                font-size: 0.55rem !important;
-                line-height: 1.1 !important;
-                word-break: break-all !important;
-                display: block !important;
-                max-width: 100% !important;
-            }
-
-            /* الفوتر (أزرار + كمية) */
-            #inventoryListContainer .flex.justify-between.items-center.pt-3 {
-                padding-top: 5px !important;
-                gap: 3px !important;
-                flex-wrap: nowrap !important;
-            }
-            #inventoryListContainer .flex.gap-2 {
-                gap: 3px !important;
-                flex-shrink: 0 !important;
-            }
-            #inventoryListContainer button {
-                width: 24px !important;
-                height: 24px !important;
-                font-size: 10px !important;
-                border-radius: 5px !important;
-                padding: 0 !important;
-            }
-
-            /* سطر الوحدة + الكمية (footer right side) */
-            #inventoryListContainer .text-emerald-400.font-bold.text-sm {
-                font-size: 0.55rem !important;
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                max-width: 60px !important;
-                text-align: left !important;
-            }
-
-            /* صندوق الملاحظات */
-            #inventoryListContainer .bg-navy-900\/60 {
-                padding: 4px 5px !important;
-                border-radius: 6px !important;
-                max-height: 60px !important;
-                overflow-y: auto !important;
-            }
-            #inventoryListContainer .bg-navy-900\/60 p {
-                font-size: 0.5rem !important;
-                line-height: 1.15 !important;
-                white-space: normal !important;
-                word-break: break-word !important;
-            }
-            #inventoryListContainer .bg-navy-900\/60 .flex.items-center.gap-2 {
-                margin-bottom: 3px !important;
-                font-size: 0.5rem !important;
-            }
-
-            /* ============ نفس التنسيق لبطاقات نقطة البيع ============ */
-            #posProductList {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 6px !important;
-            }
-            #posProductList > div {
-                padding: 8px !important;
-                border-radius: 12px !important;
-                min-width: 0 !important;
-                overflow: hidden !important;
-            }
-            #posProductList .w-16, #posProductList .h-16 {
-                width: 36px !important;
-                height: 36px !important;
-                font-size: 14px !important;
-                margin-bottom: 6px !important;
-            }
-            #posProductList h4 {
-                font-size: 0.7rem !important;
-                line-height: 1.15 !important;
-                margin-bottom: 2px !important;
-                word-break: break-word !important;
-                overflow-wrap: break-word !important;
-                max-width: 100% !important;
-            }
-            #posProductList p {
-                font-size: 0.55rem !important;
-                margin-bottom: 3px !important;
-            }
-            #posProductList .text-gold-400 {
-                font-size: 0.65rem !important;
-            }
-            #posProductList .bg-navy-900 {
-                font-size: 0.5rem !important;
-                padding: 1px 4px !important;
-            }
-
-            /* ============ تنسيق بطاقات العملاء ============ */
-            #customersListContainer {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 6px !important;
-            }
-            #customersListContainer > div {
-                padding: 8px !important;
-                border-radius: 12px !important;
-                min-width: 0 !important;
-            }
-            #customersListContainer h3 {
-                font-size: 0.75rem !important;
-                word-break: break-word !important;
-            }
-            #customersListContainer .w-14, #customersListContainer .h-14 {
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 12px !important;
-            }
-            #customersListContainer p {
-                font-size: 0.55rem !important;
-            }
-            #customersListContainer .text-sm {
-                font-size: 0.6rem !important;
-            }
-            #customersListContainer .text-xs {
-                font-size: 0.55rem !important;
-            }
-            #customersListContainer button {
-                font-size: 0.55rem !important;
-                padding: 5px !important;
-            }
-
-            /* ============ تنسيق بطاقات المصروفات ============ */
-            #expensesListContainer {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 6px !important;
-            }
-            #expensesListContainer > div {
-                padding: 8px !important;
-                border-radius: 12px !important;
-                min-width: 0 !important;
-            }
-            #expensesListContainer h3 {
-                font-size: 0.75rem !important;
-                word-break: break-word !important;
-            }
-            #expensesListContainer .w-14, #expensesListContainer .h-14 {
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 12px !important;
-            }
-            #expensesListContainer p {
-                font-size: 0.55rem !important;
-            }
-            #expensesListContainer .text-sm {
-                font-size: 0.6rem !important;
-            }
-            #expensesListContainer .text-xs {
-                font-size: 0.55rem !important;
-            }
-            #expensesListContainer button {
-                font-size: 0.55rem !important;
-                padding: 5px !important;
-            }
-
-            /* ============ بطاقات المشتركين (لوحة المدير) ============ */
-            #adminClientsGrid {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 6px !important;
-            }
-            #adminClientsGrid > div {
-                padding: 8px !important;
-                border-radius: 12px !important;
-                min-width: 0 !important;
-            }
-            #adminClientsGrid h3 {
-                font-size: 0.75rem !important;
-                word-break: break-word !important;
-            }
-            #adminClientsGrid .w-14, #adminClientsGrid .h-14 {
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 12px !important;
-            }
-            #adminClientsGrid p {
-                font-size: 0.55rem !important;
-            }
-            #adminClientsGrid .text-sm {
-                font-size: 0.6rem !important;
-            }
-            #adminClientsGrid .text-xs {
-                font-size: 0.55rem !important;
-            }
-            #adminClientsGrid button {
-                font-size: 0.55rem !important;
-                padding: 5px !important;
-            }
         }
-        @media (max-width: 480px) {
-            #page-title { max-width: 80px; font-size: 12px !important; }
-            #topExchangeRate { width: 40px !important; font-size: 10px !important; }
-            header .bg-navy-900 { padding: 3px 4px !important; }
-
-            /* مزيد من التصغير لبطاقات المنتجات على الهواتف الصغيرة */
-            #inventoryListContainer > div {
-                padding: 6px !important;
-                gap: 4px !important;
-            }
-            #inventoryListContainer h3 {
-                font-size: 0.65rem !important;
-                padding-left: 20px !important;
-            }
-            #inventoryListContainer p {
-                font-size: 0.45rem !important;
-            }
-            #inventoryListContainer .bg-white {
-                min-height: 32px !important;
-                max-height: 40px !important;
-                padding: 2px !important;
-            }
-            #inventoryListContainer .bg-white svg {
-                max-height: 34px !important;
-            }
-            #inventoryListContainer .grid.grid-cols-3 > div {
-                padding: 2px 1px !important;
-            }
-            #inventoryListContainer .grid.grid-cols-3 span:first-child {
-                font-size: 0.4rem !important;
-            }
-            #inventoryListContainer .grid.grid-cols-3 span:last-child {
-                font-size: 0.5rem !important;
-            }
-            #inventoryListContainer button {
-                width: 22px !important;
-                height: 22px !important;
-                font-size: 9px !important;
-            }
-            #inventoryListContainer .text-emerald-400.font-bold.text-sm {
-                font-size: 0.5rem !important;
-                max-width: 50px !important;
-            }
-            #inventoryListContainer > div > .absolute {
-                width: 20px !important;
-                height: 20px !important;
-                font-size: 8px !important;
-            }
-
-            #posProductList h4 { font-size: 0.65rem !important; }
-            #posProductList p { font-size: 0.5rem !important; }
-            #posProductList .text-gold-400 { font-size: 0.6rem !important; }
-        }
+        /* Notifications dropdown */
         #notificationsDropdown { display: none; }
         #notificationsDropdown.open { display: flex; }
         .notif-item { transition: all 0.2s; }
         .notif-item:hover { background-color: rgba(30, 41, 59, 0.7); }
         .notif-item.unread { background-color: rgba(30, 41, 59, 0.4); }
-
-        /* ⭐⭐⭐ حماية مطلقة: إخفاء زر حذف الإشعارات عن العميل ⭐⭐⭐ */
-        body.client-mode #clearAllNotifBtn,
-        body.client-mode #clearAllNotifBtn * {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            width: 0 !important;
-            height: 0 !important;
-            overflow: hidden !important;
-            position: absolute !important;
-            left: -9999px !important;
-        }
-
-        /* ⭐⭐⭐ شعار التطبيق في بطاقة المعلومات ⭐⭐⭐ */
-        .app-logo-glow { position: relative; }
-        .app-logo-glow::before { content: ''; position: absolute; inset: -8px; background: radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(250, 204, 21, 0) 70%); border-radius: 24px; z-index: 0; }
-        .app-logo-box { position: relative; z-index: 1; width: 80px; height: 80px; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(234, 179, 8, 0.4), 0 0 0 3px rgba(250, 204, 21, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3); background: #0a1120; display: flex; align-items: center; justify-content: center; }
-        .app-logo-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 20px; display: block; }
     </style>
 </head>
 <body>
@@ -457,7 +113,7 @@
     <div id="loginScreen">
         <div class="bg-navy-800 p-8 rounded-2xl w-full max-w-md border border-navy-700 shadow-2xl mx-4 my-8">
             <div class="text-center mb-6">
-                <img src="icon.png" onerror="this.src='https://img.icons8.com/fluency/96/accounting.png'" alt="Logo" class="w-20 h-20 mx-auto mb-3 rounded-2xl shadow-lg object-cover border border-navy-600">
+                <img id="loginLogo" src="icon.png" onerror="this.src='https://img.icons8.com/fluency/96/accounting.png'" alt="Logo" oncontextmenu="return false;" class="w-20 h-20 mx-auto mb-3 rounded-2xl shadow-lg object-cover border border-navy-600" style="-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;cursor:default;">
                 <h2 class="text-2xl font-bold text-gold-400">الحسن للمحاسبة</h2>
                 <p class="text-slate-400 text-sm mt-1">تسجيل الدخول للنظام</p>
             </div>
@@ -477,8 +133,7 @@
                     <i class="fa-solid fa-exclamation-circle"></i> <span id="loginErrorText">اسم المستخدم أو كلمة المرور غير صحيحة</span>
                 </div>
                 <button onclick="login()" class="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-3 rounded-lg shadow-lg flex items-center justify-center gap-2"><i class="fa-solid fa-sign-in-alt"></i> تسجيل الدخول</button>
-                <button onclick="showMasterLogin()" class="w-full bg-transparent hover:bg-navy-700/50 text-gold-400 font-bold py-2 rounded-lg border border-gold-500/30 flex items-center justify-center gap-2 text-sm mt-2"><i class="fa-solid fa-user-shield"></i> دخول المزود</button>
-                <p class="text-center text-slate-500 text-xs mt-3">© 2026 الحسن للمحاسبة</p>
+                <p id="loginCopyright" class="text-center text-slate-500 text-xs mt-3 select-none" style="-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;">© 2026 الحسن للمحاسبة</p>
             </div>
         </div>
     </div>
@@ -574,12 +229,13 @@
                 </div>
             </header>
 
+            <!-- ⭐ قائمة الإشعارات المنسدلة ⭐ -->
             <div id="notificationsDropdown" class="fixed top-20 left-2 right-2 md:left-4 md:right-auto md:w-96 max-h-[70vh] bg-navy-800 border border-navy-700 rounded-2xl shadow-2xl z-[300] flex-col overflow-hidden">
                 <div class="flex items-center justify-between p-4 border-b border-navy-700 bg-navy-900/70">
                     <h3 class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-bell text-gold-400"></i> الإشعارات</h3>
                     <div class="flex gap-3 items-center">
                         <button onclick="markAllNotificationsAsRead()" class="text-xs text-gold-400 hover:text-gold-300 transition-colors" title="تعليم الكل كمقروء"><i class="fa-solid fa-check-double"></i></button>
-                        <button id="clearAllNotifBtn" onclick="clearAllNotifications()" class="text-xs text-red-400 hover:text-red-300 transition-colors" title="حذف الكل"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="clearAllNotifications()" class="text-xs text-red-400 hover:text-red-300 transition-colors" title="حذف الكل"><i class="fa-solid fa-trash"></i></button>
                         <button onclick="toggleNotifications(event)" class="text-slate-400 hover:text-white transition-colors" title="إغلاق"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 </div>
@@ -782,27 +438,10 @@
                         </div>
                         <button onclick="updateCredentials()" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-save"></i> تحديث بيانات الدخول</button>
                     </div>
-                    <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-6">
+                    <div class="flex flex-wrap gap-4 justify-center md:justify-start mb-10">
                         <button onclick="saveSettings(); showToast('تم الحفظ', 'success');" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-6 py-3 rounded-xl shadow-lg flex items-center gap-2"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات</button>
                         <button onclick="resetData()" class="bg-red-900/80 hover:bg-red-800 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> إعادة ضبط البيانات</button>
                         <button onclick="deleteAllData()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-solid fa-trash"></i> حذف جميع البيانات</button>
-                    </div>
-
-                    <div class="bg-navy-800 p-6 rounded-2xl border border-navy-700 shadow-xl mb-10">
-                        <div class="flex flex-col items-center justify-center py-6">
-                            <div class="app-logo-glow mb-5">
-                                <div class="app-logo-box">
-                                    <img src="icon.png" onerror="this.parentElement.innerHTML='<span style=&quot;font-family:Cairo;font-weight:900;font-size:38px;color:#0a1120;&quot;>ح</span>';this.parentElement.style.background='linear-gradient(135deg, #fde047 0%, #eab308 50%, #ca8a04 100%)';" alt="شعار التطبيق">
-                                </div>
-                            </div>
-                            <h3 class="text-2xl md:text-3xl font-bold text-gold-400 mb-2">الحسن للمحاسبة</h3>
-                            <p class="text-slate-400 text-sm md:text-base mb-6 text-center">نظام محاسبة متكامل للمبيعات والمخزون</p>
-                            <div class="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-slate-500 flex-wrap justify-center">
-                                <span>الإصدار 2.0.0</span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
-                                <span>© 2026 جميع الحقوق محفوظة</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1106,30 +745,10 @@
             info: { icon: 'fa-info-circle', color: 'text-blue-400 bg-blue-500/20', title: 'معلومة' }
         };
 
-        function enforceNotificationPermissions() {
-            const clearBtn = document.getElementById('clearAllNotifBtn');
-            if (!clearBtn) return;
-            
-            if (isClientUser()) {
-                document.body.classList.add('client-mode');
-                clearBtn.style.display = 'none';
-                clearBtn.style.visibility = 'hidden';
-                clearBtn.style.pointerEvents = 'none';
-                clearBtn.setAttribute('aria-hidden', 'true');
-                clearBtn.setAttribute('data-client-hidden', 'true');
-            } else {
-                document.body.classList.remove('client-mode');
-                clearBtn.style.display = '';
-                clearBtn.style.visibility = '';
-                clearBtn.style.pointerEvents = '';
-                clearBtn.removeAttribute('aria-hidden');
-                clearBtn.removeAttribute('data-client-hidden');
-            }
-        }
-
         function addNotification(type, message, options = {}) {
             if (!Array.isArray(state.notifications)) state.notifications = [];
             
+            // منع التكرار بناءً على dedupeKey
             if (options.dedupeKey) {
                 const exists = state.notifications.find(n => n.dedupeKey === options.dedupeKey);
                 if (exists) return;
@@ -1147,10 +766,12 @@
             
             state.notifications.unshift(notification);
             
+            // حد أقصى 100 إشعار
             if (state.notifications.length > 100) {
                 state.notifications = state.notifications.slice(0, 100);
             }
             
+            // حفظ محلي وسحابي
             try { localStorage.setItem('ALHASAN_ACCOUNTING', JSON.stringify(state)); } catch(e) {}
             saveStateToCloud();
             
@@ -1159,8 +780,6 @@
 
         function renderNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
-            
-            enforceNotificationPermissions();
             
             const unreadCount = state.notifications.filter(n => !n.read).length;
             const badge = document.getElementById('notifBadge');
@@ -1214,7 +833,6 @@
             if (event) event.stopPropagation();
             const dropdown = document.getElementById('notificationsDropdown');
             if (!dropdown) return;
-            enforceNotificationPermissions();
             dropdown.classList.toggle('open');
         }
 
@@ -1242,14 +860,6 @@
         }
 
         function clearAllNotifications() {
-            if (isClientUser()) {
-                showToast('⚠️ غير مصرح لك بحذف الإشعارات', 'warning');
-                return;
-            }
-            if (document.body.classList.contains('client-mode')) {
-                showToast('⚠️ غير مصرح لك بحذف الإشعارات', 'warning');
-                return;
-            }
             if (!Array.isArray(state.notifications) || state.notifications.length === 0) return;
             if (confirm('هل أنت متأكد من حذف جميع الإشعارات؟')) {
                 state.notifications = [];
@@ -1260,6 +870,7 @@
             }
         }
 
+        // إغلاق قائمة الإشعارات عند الضغط خارجها
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('notificationsDropdown');
             const bell = document.getElementById('notificationBell');
@@ -1268,26 +879,14 @@
             dropdown.classList.remove('open');
         });
 
-        setInterval(function() {
-            if (isClientUser()) {
-                const clearBtn = document.getElementById('clearAllNotifBtn');
-                if (clearBtn && clearBtn.style.display !== 'none') {
-                    clearBtn.style.display = 'none';
-                    clearBtn.style.visibility = 'hidden';
-                    clearBtn.style.pointerEvents = 'none';
-                }
-                if (!document.body.classList.contains('client-mode')) {
-                    document.body.classList.add('client-mode');
-                }
-            }
-        }, 500);
-
+        // ⭐ توليد الإشعارات التلقائية
         function generateAutoNotifications() {
             if (!Array.isArray(state.notifications)) state.notifications = [];
             
             const username = sessionStorage.getItem('alhasan_client_username') || 'admin';
             const isAdmin = !isClientUser();
             
+            // 1. إشعار ترحيبي عند الدخول لأول مرة (يُحفظ في localStorage لكل مستخدم)
             const welcomeKey = 'alhasan_welcomed_' + username;
             if (!localStorage.getItem(welcomeKey)) {
                 if (isAdmin) {
@@ -1299,6 +898,7 @@
                 localStorage.setItem(welcomeKey, 'true');
             }
             
+            // 2. إشعارات الاشتراك
             if (state.subscription && state.subscription.endDate) {
                 const daysLeft = getDaysRemaining();
                 const endDate = state.subscription.endDate;
@@ -1314,6 +914,7 @@
                 }
             }
             
+            // 3. إشعارات تجديد الاشتراك (فقط للعملاء)
             if (isClientUser()) {
                 const lastEndKey = 'alhasan_last_end_' + username;
                 const lastKnownEnd = localStorage.getItem(lastEndKey);
@@ -1324,6 +925,7 @@
                 if (currentEnd) localStorage.setItem(lastEndKey, currentEnd);
             }
             
+            // 4. إشعارات المخزون
             state.products.forEach(p => {
                 if (p.qty <= 0) {
                     addNotification('out_of_stock', `❌ المنتج "${p.name}" نفذ تماماً من المخزون! يُنصح بإعادة التخزين.`, { dedupeKey: 'out_' + p.id });
@@ -1335,6 +937,7 @@
             renderNotifications();
         }
 
+        // ⭐ فحص المخزون بعد البيع أو التعديل
         function checkStockNotifications() {
             state.products.forEach(p => {
                 if (p.qty <= 0) {
@@ -1445,6 +1048,17 @@
             
             if (!state.subscription) state.subscription = JSON.parse(JSON.stringify(defaultState.subscription));
             
+            if (username === state.subscription.username && password === state.subscription.password) {
+                sessionStorage.setItem('alhasan_logged_in', 'true');
+                sessionStorage.setItem('alhasan_user_type', 'admin');
+                sessionStorage.setItem('alhasan_client_username', username);
+                errorBox.classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('loginPassword').value = '';
+                startApp();
+                return;
+            }
+            
             const clients = Array.isArray(state.adminClients) ? state.adminClients : [];
             const client = clients.find(c => (c.username || 'admin') === username && (c.password || 'admin123') === password);
             
@@ -1465,14 +1079,6 @@
                 sessionStorage.setItem('alhasan_client_db_key', encodedUsername);
                 sessionStorage.setItem('alhasan_client_id', client.id);
                 
-                document.body.classList.add('client-mode');
-                const clearBtn = document.getElementById('clearAllNotifBtn');
-                if (clearBtn) {
-                    clearBtn.style.display = 'none';
-                    clearBtn.style.visibility = 'hidden';
-                    clearBtn.style.pointerEvents = 'none';
-                }
-                
                 await loadClientData(encodedUsername);
                 
                 state.subscription = { startDate: client.startDate, endDate: client.endDate, username: client.username, password: client.password, providerPhone: state.subscription.providerPhone || '' };
@@ -1492,26 +1098,6 @@
                 return;
             }
             
-            if (username === state.subscription.username && password === state.subscription.password) {
-                sessionStorage.setItem('alhasan_logged_in', 'true');
-                sessionStorage.setItem('alhasan_user_type', 'admin');
-                sessionStorage.setItem('alhasan_client_username', username);
-                
-                document.body.classList.remove('client-mode');
-                const clearBtn = document.getElementById('clearAllNotifBtn');
-                if (clearBtn) {
-                    clearBtn.style.display = '';
-                    clearBtn.style.visibility = '';
-                    clearBtn.style.pointerEvents = '';
-                }
-                
-                errorBox.classList.add('hidden');
-                document.getElementById('loginScreen').classList.remove('active');
-                document.getElementById('loginPassword').value = '';
-                startApp();
-                return;
-            }
-            
             errorBox.classList.remove('hidden');
             errorText.innerText = 'اسم المستخدم أو كلمة المرور غير صحيحة';
             showToast('❌ بيانات الدخول غير صحيحة', 'warning');
@@ -1519,7 +1105,6 @@
 
         function logout() {
             if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-                document.body.classList.remove('client-mode');
                 sessionStorage.removeItem('alhasan_logged_in');
                 sessionStorage.removeItem('alhasan_user_type');
                 sessionStorage.removeItem('alhasan_client_username');
@@ -1864,14 +1449,6 @@
 
         function startApp() {
             document.getElementById('app').classList.add('active');
-            
-            if (isClientUser()) {
-                document.body.classList.add('client-mode');
-            } else {
-                document.body.classList.remove('client-mode');
-            }
-            enforceNotificationPermissions();
-            
             document.getElementById('topExchangeRate').value = state.settings.exchangeRate;
             document.getElementById('settingsNewSYP').value = state.settings.exchangeRate;
             document.getElementById('settingsOldSYP').value = state.settings.oldExchangeRate;
@@ -1888,8 +1465,7 @@
             document.getElementById('dashLastUpdate').innerText = todayDate;
             updateSubscriptionUI();
             renderAll();
-            setTimeout(() => { enforceNotificationPermissions(); }, 100);
-            setTimeout(() => { enforceNotificationPermissions(); }, 500);
+            // ⭐ توليد الإشعارات التلقائية بعد تحميل التطبيق
             setTimeout(() => { try { generateAutoNotifications(); } catch(e) { console.error('Notification error:', e); } }, 800);
         }
 
@@ -1931,7 +1507,6 @@
             try { updateCartUI(); } catch(e) {}
             try { updateSubscriptionUI(); } catch(e) {}
             try { renderNotifications(); } catch(e) {}
-            try { enforceNotificationPermissions(); } catch(e) {}
         }
 
         function switchPage(pageId, element) {
@@ -2212,6 +1787,7 @@
             renderPOSProducts();
             renderPosCategories();
             renderCustomers();
+            // ⭐ فحص المخزون بعد البيع
             setTimeout(() => { try { checkStockNotifications(); } catch(e) {} }, 500);
         }
         function showReceipt(invoice) {
@@ -2584,6 +2160,7 @@
             }, 100);
         }
 
+        // ⭐⭐⭐ قارئ الباركود المُحسّن ⭐⭐⭐
         let html5QrCode = null;
         let scannerActive = false;
         let lastScannedText = '';
@@ -2701,6 +2278,91 @@
             };
             reader.readAsText(file);
         }
+
+        // ============================================================
+        // ⭐⭐⭐ الدخول السري للمزود ⭐⭐⭐
+        // 1) 10 نقرات سريعة على الشعار (خلال ثانيتين)
+        // 2) ضغط مطوّل 3 ثواني على الشعار
+        // 3) ضغط مطوّل 3 ثواني على نص الحقوق
+        // 4) اختصار Ctrl+Shift+M للكمبيوتر
+        // ============================================================
+        (function initHiddenMasterAccess() {
+            let logoTapCount = 0;
+            let logoTapTimer = null;
+            let logoLongPressTimer = null;
+            let copyrightLongPressTimer = null;
+            let suppressLogoTaps = false;
+
+            function doMasterLogin() {
+                if (navigator.vibrate) { try { navigator.vibrate(80); } catch(e){} }
+                showMasterLogin();
+            }
+
+            const logo = document.getElementById('loginLogo');
+            const copyright = document.getElementById('loginCopyright');
+
+            // ---------- 1) 10 نقرات سريعة على الشعار ----------
+            if (logo) {
+                logo.addEventListener('click', function (e) {
+                    if (suppressLogoTaps) return;
+                    logoTapCount++;
+                    clearTimeout(logoTapTimer);
+                    logoTapTimer = setTimeout(() => { logoTapCount = 0; }, 2000);
+                    if (logoTapCount >= 10) {
+                        logoTapCount = 0;
+                        clearTimeout(logoTapTimer);
+                        doMasterLogin();
+                    }
+                });
+
+                // ---------- 2) ضغط مطوّل 3 ثواني على الشعار ----------
+                const startLogoLong = () => {
+                    clearTimeout(logoLongPressTimer);
+                    logoLongPressTimer = setTimeout(() => {
+                        suppressLogoTaps = true;
+                        setTimeout(() => { suppressLogoTaps = false; logoTapCount = 0; }, 1500);
+                        doMasterLogin();
+                    }, 3000);
+                };
+                const cancelLogoLong = () => clearTimeout(logoLongPressTimer);
+
+                logo.addEventListener('touchstart', startLogoLong, { passive: true });
+                logo.addEventListener('touchend', cancelLogoLong);
+                logo.addEventListener('touchmove', cancelLogoLong);
+                logo.addEventListener('touchcancel', cancelLogoLong);
+                logo.addEventListener('mousedown', startLogoLong);
+                logo.addEventListener('mouseup', cancelLogoLong);
+                logo.addEventListener('mouseleave', cancelLogoLong);
+            }
+
+            // ---------- 3) ضغط مطوّل 3 ثواني على نص الحقوق ----------
+            if (copyright) {
+                const startCpLong = () => {
+                    clearTimeout(copyrightLongPressTimer);
+                    copyrightLongPressTimer = setTimeout(() => { doMasterLogin(); }, 3000);
+                };
+                const cancelCpLong = () => clearTimeout(copyrightLongPressTimer);
+
+                copyright.addEventListener('touchstart', startCpLong, { passive: true });
+                copyright.addEventListener('touchend', cancelCpLong);
+                copyright.addEventListener('touchmove', cancelCpLong);
+                copyright.addEventListener('touchcancel', cancelCpLong);
+                copyright.addEventListener('mousedown', startCpLong);
+                copyright.addEventListener('mouseup', cancelCpLong);
+                copyright.addEventListener('mouseleave', cancelCpLong);
+            }
+
+            // ---------- 4) اختصار Ctrl+Shift+M ----------
+            document.addEventListener('keydown', function (e) {
+                if (e.ctrlKey && e.shiftKey && (e.key === 'M' || e.key === 'm')) {
+                    e.preventDefault();
+                    const loginScreen = document.getElementById('loginScreen');
+                    if (loginScreen && loginScreen.classList.contains('active')) {
+                        doMasterLogin();
+                    }
+                }
+            });
+        })();
     </script>
 </body>
 </html>
