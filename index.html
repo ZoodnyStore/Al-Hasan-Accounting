@@ -2503,6 +2503,196 @@
             setTimeout(() => URL.revokeObjectURL(url), 1500);
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 📗 مُولِّد ملف XLSX حقيقي (بدون مكتبات خارجية — يعمل أوفلاين)
+        // يُستخدم على ويندوز/أندرويد ليظهر الجدول منظماً في Excel
+        // ═══════════════════════════════════════════════════════════════
+        const _crcTable = (function () {
+            const t = new Uint32Array(256);
+            for (let n = 0; n < 256; n++) {
+                let c = n;
+                for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                t[n] = c >>> 0;
+            }
+            return t;
+        })();
+
+        function _crc32(bytes) {
+            let c = 0xFFFFFFFF;
+            for (let i = 0; i < bytes.length; i++) c = _crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+            return (c ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        // ZIP بدون ضغط (store) — يكفي تماماً لملفات xlsx
+        function _buildZip(files) {
+            const enc = new TextEncoder();
+            const chunks = [];
+            const central = [];
+            let offset = 0;
+            const u16 = (v) => [v & 0xFF, (v >>> 8) & 0xFF];
+            const u32 = (v) => [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF];
+
+            files.forEach(f => {
+                const nameBytes = enc.encode(f.name);
+                const data = (typeof f.data === 'string') ? enc.encode(f.data) : f.data;
+                const crc = _crc32(data);
+                const local = new Uint8Array([
+                    0x50, 0x4B, 0x03, 0x04, ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21),
+                    ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameBytes.length), ...u16(0)
+                ]);
+                chunks.push(local, nameBytes, data);
+                central.push({ nameBytes, crc, size: data.length, offset });
+                offset += local.length + nameBytes.length + data.length;
+            });
+
+            const centralStart = offset;
+            central.forEach(c => {
+                const hdr = new Uint8Array([
+                    0x50, 0x4B, 0x01, 0x02, ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21),
+                    ...u32(c.crc), ...u32(c.size), ...u32(c.size), ...u16(c.nameBytes.length),
+                    ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(c.offset)
+                ]);
+                chunks.push(hdr, c.nameBytes);
+                offset += hdr.length + c.nameBytes.length;
+            });
+            const centralSize = offset - centralStart;
+            chunks.push(new Uint8Array([
+                0x50, 0x4B, 0x05, 0x06, ...u16(0), ...u16(0), ...u16(central.length), ...u16(central.length),
+                ...u32(centralSize), ...u32(centralStart), ...u16(0)
+            ]));
+            return new Blob(chunks, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        }
+
+        function _xmlEsc(s) {
+            return String(s)
+                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function _colLetter(i) {
+            let s = '';
+            i++;
+            while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); }
+            return s;
+        }
+
+        // يبني Blob لملف xlsx من مصفوفة الصفوف (الصف الأول = العناوين)
+        function buildSalesXlsxBlob(rows) {
+            const MONEY_COLS = [11, 12, 13, 14, 15, 16, 18];   // أعمدة الأسعار (0.00)
+            const INT_COLS = [9, 17, 19];                      // الكمية، الخصم، عدد القطع
+            const TEXT_COLS = [7, 8];                          // SKU والباركود (نص للحفاظ على الأصفار)
+            const widths = [16, 24, 18, 14, 12, 16, 26, 14, 20, 9, 11, 16, 18, 18, 20, 18, 20, 11, 18, 18];
+
+            let sheetRows = '';
+            rows.forEach((row, r) => {
+                sheetRows += '<row r="' + (r + 1) + '"' + (r === 0 ? ' ht="30" customHeight="1"' : '') + '>';
+                row.forEach((cell, c) => {
+                    const ref = _colLetter(c) + (r + 1);
+                    const raw = (cell === null || cell === undefined) ? '' : cell;
+                    if (r === 0) {
+                        sheetRows += '<c r="' + ref + '" s="1" t="inlineStr"><is><t>' + _xmlEsc(raw) + '</t></is></c>';
+                        return;
+                    }
+                    if (raw === '') { sheetRows += '<c r="' + ref + '" s="2"/>'; return; }
+                    const isMoney = MONEY_COLS.indexOf(c) !== -1;
+                    const isInt = INT_COLS.indexOf(c) !== -1;
+                    const num = Number(raw);
+                    if ((isMoney || isInt) && isFinite(num) && String(raw).trim() !== '') {
+                        sheetRows += '<c r="' + ref + '" s="' + (isMoney ? 3 : 4) + '"><v>' + num + '</v></c>';
+                    } else {
+                        sheetRows += '<c r="' + ref + '" s="2" t="inlineStr"><is><t xml:space="preserve">' + _xmlEsc(raw) + '</t></is></c>';
+                    }
+                });
+                sheetRows += '</row>';
+            });
+
+            const lastCol = _colLetter(rows[0].length - 1);
+            const cols = widths.map((w, i) => '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>').join('');
+
+            const sheetXml =
+                '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+                '<sheetViews><sheetView rightToLeft="1" workbookViewId="0" tabSelected="1">' +
+                '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>' +
+                '<selection pane="bottomLeft"/></sheetView></sheetViews>' +
+                '<sheetFormatPr defaultRowHeight="18"/>' +
+                '<cols>' + cols + '</cols>' +
+                '<sheetData>' + sheetRows + '</sheetData>' +
+                '<autoFilter ref="A1:' + lastCol + rows.length + '"/>' +
+                '</worksheet>';
+
+            const stylesXml =
+                '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+                '<fonts count="2">' +
+                '<font><sz val="11"/><name val="Calibri"/></font>' +
+                '<font><b/><sz val="11"/><color rgb="FFFACC15"/><name val="Calibri"/></font>' +
+                '</fonts>' +
+                '<fills count="3">' +
+                '<fill><patternFill patternType="none"/></fill>' +
+                '<fill><patternFill patternType="gray125"/></fill>' +
+                '<fill><patternFill patternType="solid"><fgColor rgb="FF0A1120"/><bgColor indexed="64"/></patternFill></fill>' +
+                '</fills>' +
+                '<borders count="2">' +
+                '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+                '<border><left style="thin"><color rgb="FFCCCCCC"/></left><right style="thin"><color rgb="FFCCCCCC"/></right>' +
+                '<top style="thin"><color rgb="FFCCCCCC"/></top><bottom style="thin"><color rgb="FFCCCCCC"/></bottom><diagonal/></border>' +
+                '</borders>' +
+                '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+                '<cellXfs count="5">' +
+                '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+                '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+                '<xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+                '<xf numFmtId="2" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+                '<xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+                '</cellXfs>' +
+                '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+                '</styleSheet>';
+
+            const files = [
+                { name: '[Content_Types].xml', data:
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+                    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+                    '<Default Extension="xml" ContentType="application/xml"/>' +
+                    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+                    '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+                    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+                    '</Types>' },
+                { name: '_rels/.rels', data:
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+                    '</Relationships>' },
+                { name: 'xl/workbook.xml', data:
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+                    '<bookViews><workbookView/></bookViews>' +
+                    '<sheets><sheet name="سجل المبيعات" sheetId="1" r:id="rId1"/></sheets>' +
+                    '</workbook>' },
+                { name: 'xl/_rels/workbook.xml.rels', data:
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+                    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+                    '</Relationships>' },
+                { name: 'xl/styles.xml', data: stylesXml },
+                { name: 'xl/worksheets/sheet1.xml', data: sheetXml }
+            ];
+            return _buildZip(files);
+        }
+
+        function triggerFileDownload(blob, ext) {
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = `sales_log_${new Date().toISOString().slice(0, 10)}.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
         function exportSalesCSV() {
             if (!Array.isArray(state.invoices) || state.invoices.length === 0) {
                 showToast('⚠️ لا توجد بيانات للتصدير', 'warning');
@@ -2529,33 +2719,25 @@
             }
 
             // ───────────────────────────────────────────────
-            // 🤖 أندرويد: UTF-8 + BOM + فاصلة ( , ) وبدون سطر sep=
-            //    (Excel/Sheets/WPS على أندرويد تتعرف عليها تلقائياً)
+            // 🪟🤖 ويندوز / أندرويد / أي جهاز آخر:
+            // ملف Excel حقيقي (.xlsx) بجدول منظم — لا يعتمد على إعدادات الفاصل
             // ───────────────────────────────────────────────
-            if (isAndroidDevice()) {
-                const SEP = ',';
-                const csvLines = rows.map((row, rIdx) =>
-                    row.map((cell, cIdx) => csvEscapeWith(rIdx > 0 && (cIdx === 7 || cIdx === 8) ? forceTextCell(cell) : cell, SEP)).join(SEP)
-                );
-                const bytes = stringToUtf8BytesWithBOM(csvLines.join('\r\n'));
-                const blob = new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
-                triggerCsvDownload(blob);
-                showToast('✅ تم تصدير ملف CSV', 'success');
+            try {
+                const xlsxBlob = buildSalesXlsxBlob(rows);
+                triggerFileDownload(xlsxBlob, 'xlsx');
+                showToast('✅ تم تصدير الملف — يفتح في Excel بجدول منظم', 'success');
                 return;
+            } catch (e) {
+                console.error('XLSX export failed, falling back to CSV:', e);
             }
 
-            // ───────────────────────────────────────────────
-            // 🪟 ويندوز / لابتوب: UTF-16 LE + BOM + فاصل Tab
-            //    يفتح في Excel مباشرة بأعمدة صحيحة وعربي سليم
-            //    بغض النظر عن إعدادات اللغة/الفاصل في الجهاز
-            // ───────────────────────────────────────────────
+            // احتياطي (نادراً): CSV بصيغة UTF-16 + Tab
             const SEP = '\t';
             const csvLines = rows.map((row, rIdx) =>
                 row.map((cell, cIdx) => csvEscapeWith(rIdx > 0 && (cIdx === 7 || cIdx === 8) ? forceTextCell(cell) : cell, SEP)).join(SEP)
             );
             const bytes = stringToUtf16LEBytesWithBOM(csvLines.join('\r\n'));
-            const blob = new Blob([bytes], { type: 'text/csv;charset=utf-16le;' });
-            triggerCsvDownload(blob);
+            triggerCsvDownload(new Blob([bytes], { type: 'text/csv;charset=utf-16le;' }));
             showToast('✅ تم تصدير ملف CSV', 'success');
         }
 
