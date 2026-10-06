@@ -452,7 +452,10 @@
                 <div id="invoices" class="page">
                     <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
                         <div><h2 class="text-3xl font-bold text-white mb-1">سجل المبيعات</h2><p class="text-slate-400 text-sm">جميع المعاملات</p></div>
-                        <button onclick="exportSalesCSV()" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-5 py-2.5 rounded-lg shadow-lg flex items-center gap-2"><i class="fa-solid fa-download"></i> تصدير CSV</button>
+                        <div class="flex gap-2 no-print">
+                            <button onclick="exportSalesCSV()" class="bg-navy-700 hover:bg-navy-600 text-white font-bold px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 text-sm"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                            <button onclick="exportSalesExcel()" class="bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-5 py-2.5 rounded-lg shadow-lg flex items-center gap-2"><i class="fa-solid fa-file-excel"></i> تصدير Excel</button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <div class="stat-card"><div class="flex-1 min-w-0"><h3 class="text-slate-400 text-sm mb-1">عدد المعاملات</h3><div class="text-2xl font-bold text-white" id="salesStatCount">0</div></div><div class="stat-card-icon bg-blue-500/10 text-blue-400"><i class="fa-solid fa-file-invoice"></i></div></div>
@@ -2338,6 +2341,12 @@
             showToast(`🗑️ تم حذف الفاتورة ${invoiceId} وإرجاع الكميات`, 'delete');
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 📊 دوال التصدير (CSV + Excel)
+        // ═══════════════════════════════════════════════════════════════
+
+        // CSV: يستخدم فاصلة منقوطة ; لأن Excel العربي يتوقعها
+        // الأرقام إنجليزية (0-9) لتُقرأ بشكل صحيح في كل المنصات
         function csvEscape(value) {
             if (value === null || value === undefined) return '';
             const str = String(value);
@@ -2359,14 +2368,8 @@
             return bytes;
         }
 
-        function exportSalesCSV() {
-            if (!Array.isArray(state.invoices) || state.invoices.length === 0) {
-                showToast('⚠️ لا توجد بيانات للتصدير', 'warning');
-                return;
-            }
-
-            const SEP = ';';
-
+        // يبني مصفوفة الصفوف بشكل موحد للاستخدام في CSV و Excel
+        function buildSalesRows() {
             const headers = [
                 'رقم الفاتورة',
                 'التاريخ',
@@ -2390,10 +2393,7 @@
                 'عدد القطع في الفاتورة'
             ];
 
-            const rows = [];
-            rows.push('sep=' + SEP);
-            rows.push(headers.map(csvEscape).join(SEP));
-
+            const rows = [headers];
             const sortedInvoices = [...state.invoices].sort((a, b) => (b.id || '').localeCompare(a.id || ''));
 
             sortedInvoices.forEach(inv => {
@@ -2410,17 +2410,6 @@
 
                 if (Array.isArray(inv.items) && inv.items.length > 0) {
                     inv.items.forEach(item => {
-                        const itemName = item.name || '';
-                        const itemSku = item.sku || '';
-                        const itemBarcode = item.barcode || '';
-                        const itemQty = item.qty || 0;
-                        const itemUnit = item.unit || 'قطعة';
-                        const itemPrice = (item.price || 0).toFixed(2);
-                        const itemTotal = ((item.price || 0) * (item.qty || 0)).toFixed(2);
-                        const itemCost = (item.cost || 0).toFixed(2);
-                        const itemTotalCost = ((item.cost || 0) * (item.qty || 0)).toFixed(2);
-                        const itemProfit = (((item.price || 0) * (item.qty || 0)) - ((item.cost || 0) * (item.qty || 0))).toFixed(2);
-
                         rows.push([
                             invoiceId,
                             invoiceDate,
@@ -2428,32 +2417,53 @@
                             paymentMethod,
                             saleType,
                             status,
-                            itemName,
-                            itemSku,
-                            itemBarcode,
-                            itemQty,
-                            itemUnit,
-                            itemPrice,
-                            itemTotal,
-                            itemCost,
-                            itemTotalCost,
-                            itemProfit,
+                            item.name || '',
+                            item.sku || '',
+                            item.barcode || '',
+                            item.qty || 0,
+                            item.unit || 'قطعة',
+                            (item.price || 0).toFixed(2),
+                            ((item.price || 0) * (item.qty || 0)).toFixed(2),
+                            (item.cost || 0).toFixed(2),
+                            ((item.cost || 0) * (item.qty || 0)).toFixed(2),
+                            (((item.price || 0) * (item.qty || 0)) - ((item.cost || 0) * (item.qty || 0))).toFixed(2),
                             invoiceTotal,
                             discountPercent,
                             invoiceProfit,
                             itemsCount
-                        ].map(csvEscape).join(SEP));
+                        ]);
                     });
                 } else {
                     rows.push([
                         invoiceId, invoiceDate, customerName, paymentMethod, saleType, status,
                         '(لا توجد أصناف)', '', '', '', '', '', '', '', '', '',
                         invoiceTotal, discountPercent, invoiceProfit, itemsCount
-                    ].map(csvEscape).join(SEP));
+                    ]);
                 }
             });
 
-            const csvContent = rows.join('\r\n');
+            return rows;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 📄 تصدير CSV (مع فاصل ; + BOM)
+        // ═══════════════════════════════════════════════════════════════
+        function exportSalesCSV() {
+            if (!Array.isArray(state.invoices) || state.invoices.length === 0) {
+                showToast('⚠️ لا توجد بيانات للتصدير', 'warning');
+                return;
+            }
+
+            const SEP = ';';
+            const rows = buildSalesRows();
+
+            // نضيف سطر sep=; في البداية ليتعرف Excel على الفاصل تلقائياً
+            const csvLines = ['sep=' + SEP];
+            rows.forEach(row => {
+                csvLines.push(row.map(csvEscape).join(SEP));
+            });
+
+            const csvContent = csvLines.join('\r\n');
             const bytes = stringToUtf8BytesWithBOM(csvContent);
             const blob = new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
 
@@ -2466,7 +2476,84 @@
             document.body.removeChild(link);
             setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-            showToast('✅ تم تصدير سجل المبيعات بالكامل (افتحه مباشرة في Excel)', 'success');
+            showToast('✅ تم تصدير ملف CSV', 'success');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 📗 تصدير Excel (.xls بصيغة HTML Table) — يعمل على كل المنصات
+        // ═══════════════════════════════════════════════════════════════
+        function exportSalesExcel() {
+            if (!Array.isArray(state.invoices) || state.invoices.length === 0) {
+                showToast('⚠️ لا توجد بيانات للتصدير', 'warning');
+                return;
+            }
+
+            const rows = buildSalesRows();
+            const headers = rows[0];
+            const dataRows = rows.slice(1);
+
+            // نبني جدول HTML بأناقة، مع دعم RTL والعربية، والأرقام إنجليزية
+            let html = '';
+            html += '<html xmlns:x="urn:schemas-microsoft-com:office:excel" dir="rtl">';
+            html += '<head>';
+            html += '<meta charset="UTF-8">';
+            html += '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
+            html += '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>';
+            html += '<x:Name>سجل المبيعات</x:Name>';
+            html += '<x:WorksheetOptions><x:DisplayRightToLeft/></x:WorksheetOptions>';
+            html += '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+            html += '<style>';
+            html += 'body { font-family: "Calibri", "Arial", sans-serif; direction: rtl; }';
+            html += 'table { border-collapse: collapse; direction: rtl; }';
+            html += 'th { background-color: #0a1120; color: #facc15; font-weight: bold; padding: 8px 10px; border: 1px solid #333; text-align: center; white-space: nowrap; }';
+            html += 'td { padding: 6px 10px; border: 1px solid #ccc; text-align: center; vertical-align: middle; mso-number-format:"\\@"; }';
+            html += 'td.text { text-align: right; }';
+            html += 'td.num { text-align: center; mso-number-format:"0\\.00"; }';
+            html += 'tr:nth-child(even) td { background-color: #f9f9f9; }';
+            html += 'tr:hover td { background-color: #fff8dc; }';
+            html += '</style>';
+            html += '</head>';
+            html += '<body>';
+            html += '<table>';
+
+            // صف العناوين
+            html += '<thead><tr>';
+            headers.forEach(h => {
+                html += '<th>' + String(h).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+
+            // الصفوف
+            dataRows.forEach(row => {
+                html += '<tr>';
+                row.forEach((cell, idx) => {
+                    const s = (cell === null || cell === undefined) ? '' : String(cell);
+                    const safe = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    // الأعمدة الرقمية (الكمية، الأسعار، الإجماليات، الخصم) نعطيها class num
+                    // الأعمدة النصية (الاسم، العميل، المنتج، إلخ) نعطيها class text
+                    const isNumeric = idx >= 9 && idx <= 18; // أعمدة الأرقام: الكمية وما بعدها
+                    const cls = isNumeric ? 'num' : 'text';
+                    html += '<td class="' + cls + '">' + safe + '</td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += '</body></html>';
+
+            // استخدام ترميز UTF-8 مع BOM لضمان ظهور العربية
+            const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = `sales_log_${new Date().toISOString().slice(0, 10)}.xls`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            showToast('✅ تم تصدير ملف Excel — يفتح مباشرة بدون مشاكل', 'success');
         }
 
         function renderCustomers(filter = '') {
