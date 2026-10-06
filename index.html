@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>الحسن للمحاسبة | نظام سحابي متكامل</title>
 
-    <!-- ⭐ منع الكاش - يجبر المتصفح على جلب أحدث نسخة دائماً ⭐ -->
+    <!-- ⭐ منع الكاش -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -13,7 +13,7 @@
     <meta name="color-scheme" content="dark">
     <meta name="msapplication-TileColor" content="#0a1120">
 
-    <!-- ⭐⭐⭐ نظام التحديث التلقائي - رقم الإصدار يتغير تلقائياً كل ساعة ⭐⭐⭐ -->
+    <!-- ⭐⭐⭐ نظام التحديث التلقائي ⭐⭐⭐ -->
     <script>
     (function checkVersion() {
         const CURRENT_VERSION = 'v_' + Math.floor(Date.now() / 3600000);
@@ -45,7 +45,6 @@
         }
     })();
     </script>
-    <!-- ⭐⭐⭐ نهاية نظام التحديث التلقائي ⭐⭐⭐ -->
 
     <!-- ⭐⭐⭐ PWA Meta Tags محسّنة ⭐⭐⭐ -->
     <meta name="theme-color" content="#0a1120">
@@ -67,68 +66,78 @@
     <link rel="icon" type="image/png" sizes="16x16" href="icon.png">
     <link rel="shortcut icon" href="icon.png">
 
-    <!-- ⭐⭐⭐ PWA Manifest - نسخة محسّنة متوافقة مع PWABuilder ⭐⭐⭐ -->
+    <!-- ⭐⭐⭐ PWA Manifest - رابط خارجي + Fallback ديناميكي ⭐⭐⭐ -->
+    <!-- الرابط الأساسي: PWABuilder يقرأ هذا الملف مباشرة -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Fallback: إذا لم يوجد manifest.json، نولّد نسخة ديناميكية -->
     <script>
-    (function generatePWAManifest() {
-        try {
-            const baseURL = window.location.origin + window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '') + '/';
-            const iconURL = baseURL + 'icon.png';
+    (function generatePWAManifestFallback() {
+        fetch('manifest.json', { method: 'HEAD' })
+            .then(response => {
+                if (!response.ok) throw new Error('manifest.json not found');
+                console.log('✅ manifest.json loaded successfully');
+            })
+            .catch(() => {
+                console.warn('⚠️ manifest.json not found, generating dynamic manifest');
+                try {
+                    const baseURL = window.location.origin + window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '') + '/';
+                    const iconURL = baseURL + 'icon.png';
 
-            const manifestData = {
-                "id": "/?source=pwa",
-                "name": "الحسن للمحاسبة - نظام محاسبة متكامل",
-                "short_name": "الحسن",
-                "description": "نظام محاسبة متكامل للمبيعات والمخزون: إدارة المنتجات، الفواتير، العملاء، المصروفات، والتقارير المالية",
-                "start_url": baseURL + "?source=pwa",
-                "scope": baseURL,
-                "display": "standalone",
-                "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
-                "orientation": "any",
-                "background_color": "#0a1120",
-                "theme_color": "#0a1120",
-                "lang": "ar",
-                "dir": "rtl",
-                "categories": ["business", "finance", "productivity", "shopping"],
-                "prefer_related_applications": false,
-                "icons": [
-                    { "src": iconURL, "sizes": "72x72",   "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "96x96",   "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "128x128", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "144x144", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "152x152", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "192x192", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "256x256", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "384x384", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-                ],
-                "screenshots": [
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "لوحة التحكم - الحسن للمحاسبة" },
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "نقطة البيع - الحسن للمحاسبة" }
-                ],
-                "shortcuts": [
-                    { "name": "نقطة البيع", "short_name": "POS", "description": "افتح نقطة البيع مباشرة", "url": baseURL + "?page=pos", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] },
-                    { "name": "المنتجات", "short_name": "المنتجات", "description": "عرض المنتجات والمخزون", "url": baseURL + "?page=inventory", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] },
-                    { "name": "سجل المبيعات", "short_name": "المبيعات", "description": "عرض سجل المبيعات", "url": baseURL + "?page=invoices", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] },
-                    { "name": "التقارير", "short_name": "التقارير", "description": "عرض التقارير المالية", "url": baseURL + "?page=reports", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] }
-                ]
-            };
+                    const manifestData = {
+                        "id": baseURL + "?source=pwa",
+                        "name": "الحسن للمحاسبة - نظام محاسبة متكامل",
+                        "short_name": "الحسن",
+                        "description": "نظام محاسبة متكامل للمبيعات والمخزون: إدارة المنتجات، الفواتير، العملاء، المصروفات، والتقارير المالية",
+                        "start_url": baseURL + "?source=pwa",
+                        "scope": baseURL,
+                        "display": "standalone",
+                        "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+                        "orientation": "any",
+                        "background_color": "#0a1120",
+                        "theme_color": "#0a1120",
+                        "lang": "ar",
+                        "dir": "rtl",
+                        "categories": ["business", "finance", "productivity", "shopping"],
+                        "prefer_related_applications": false,
+                        "icons": [
+                            { "src": iconURL, "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "96x96",   "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "128x128", "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "144x144", "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "152x152", "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "192x192", "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "256x256", "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "384x384", "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "any" },
+                            { "src": iconURL, "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+                            { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+                        ],
+                        "screenshots": [
+                            { "src": iconURL, "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "لوحة التحكم" },
+                            { "src": iconURL, "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "نقطة البيع" }
+                        ],
+                        "shortcuts": [
+                            { "name": "نقطة البيع", "short_name": "POS", "url": baseURL + "?page=pos", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] },
+                            { "name": "المنتجات", "short_name": "المنتجات", "url": baseURL + "?page=inventory", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] },
+                            { "name": "سجل المبيعات", "short_name": "المبيعات", "url": baseURL + "?page=invoices", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] },
+                            { "name": "التقارير", "short_name": "التقارير", "url": baseURL + "?page=reports", "icons": [{ "src": iconURL, "sizes": "192x192", "type": "image/png" }] }
+                        ]
+                    };
 
-            const blob = new Blob([JSON.stringify(manifestData, null, 2)], { type: 'application/manifest+json' });
-            const manifestURL = URL.createObjectURL(blob);
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = manifestURL;
-            document.head.appendChild(link);
-            console.log('✅ PWA Manifest created (11 sizes + screenshots + shortcuts)');
-        } catch (e) {
-            console.warn('⚠️ Manifest generation failed:', e);
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = 'manifest.json';
-            document.head.appendChild(link);
-        }
+                    const blob = new Blob([JSON.stringify(manifestData, null, 2)], { type: 'application/manifest+json' });
+                    const manifestURL = URL.createObjectURL(blob);
+                    let existingLink = document.querySelector('link[rel="manifest"]');
+                    if (existingLink) existingLink.remove();
+                    const link = document.createElement('link');
+                    link.rel = 'manifest';
+                    link.href = manifestURL;
+                    document.head.appendChild(link);
+                    console.log('✅ Dynamic PWA Manifest created (fallback)');
+                } catch (e) {
+                    console.warn('⚠️ Manifest generation failed:', e);
+                }
+            });
     })();
     </script>
     <!-- ⭐⭐⭐ نهاية إعداد PWA ⭐⭐⭐ -->
@@ -883,7 +892,7 @@
         </div>
     </div>
 
-    <!-- ⭐⭐⭐ PWA Service Worker - نسخة محسّنة تعمل بدون إنترنت ⭐⭐⭐ -->
+    <!-- ⭐⭐⭐ PWA Service Worker - نسخة محسّنة ⭐⭐⭐ -->
     <script>
     (function registerPWAServiceWorker() {
         if (!('serviceWorker' in navigator)) {
@@ -922,7 +931,6 @@
             self.addEventListener('fetch', (event) => {
                 const { request } = event;
                 const url = new URL(request.url);
-
                 if (request.method !== 'GET') return;
                 if (url.protocol === 'chrome-extension:') return;
                 if (url.hostname.includes('firebaseio.com')) return;
@@ -945,7 +953,6 @@
                     );
                     return;
                 }
-
                 if (request.destination === 'image') {
                     event.respondWith(
                         caches.match(request).then((cached) => {
@@ -959,7 +966,6 @@
                     );
                     return;
                 }
-
                 event.respondWith(
                     caches.match(request).then((cached) => {
                         const fetchPromise = fetch(request).then((response) => {
@@ -1003,7 +1009,6 @@
         });
     })();
     </script>
-    <!-- ⭐⭐⭐ نهاية PWA Service Worker ⭐⭐⭐ -->
 
     <script>
         const firebaseConfig = {
@@ -1164,7 +1169,6 @@
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
                 ctx.drawImage(canvas, padding, padding);
-
                 finalCanvas.toBlob((blob) => {
                     if (!blob) { showToast('⚠️ فشل إنشاء الصورة', 'warning'); return; }
                     const url = URL.createObjectURL(blob);
@@ -2885,7 +2889,7 @@
         })();
     </script>
 
-    <!-- ⭐⭐⭐ المساعد الذكي (مستقل تماماً) ⭐⭐⭐ -->
+    <!-- ⭐⭐⭐ المساعد الذكي ⭐⭐⭐ -->
     <script>
     (function () {
         'use strict';
