@@ -8,16 +8,13 @@
     <!-- ⭐⭐⭐ نظام التحديث التلقائي - رقم الإصدار يتغير تلقائياً كل ساعة ⭐⭐⭐ -->
     <script>
     (function checkVersion() {
-        // رقم الإصدار يتغير تلقائياً كل ساعة — لا حاجة لتعديله يدوياً أبداً
         const CURRENT_VERSION = 'v_' + Math.floor(Date.now() / 3600000);
         let savedVersion = null;
         try { savedVersion = localStorage.getItem('app_version'); } catch(e) {}
 
         if (savedVersion !== CURRENT_VERSION) {
             console.log('🔄 نسخة جديدة مكتشفة! (' + savedVersion + ' → ' + CURRENT_VERSION + ')');
-
             try { localStorage.setItem('app_version', CURRENT_VERSION); } catch(e) {}
-
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function(registrations) {
                     for (let registration of registrations) {
@@ -26,7 +23,6 @@
                     }
                 }).catch(function(err) { console.warn('SW unregister error:', err); });
             }
-
             if ('caches' in window) {
                 caches.keys().then(function(names) {
                     for (let name of names) {
@@ -35,19 +31,13 @@
                     }
                 }).catch(function(err) { console.warn('Cache delete error:', err); });
             }
-
-            // لا نُعيد التحميل إذا كانت هذه أول مرة (savedVersion === null)
             if (savedVersion !== null) {
-                setTimeout(function() {
-                    window.location.reload(true);
-                }, 800);
+                setTimeout(function() { window.location.reload(true); }, 800);
             }
         }
     })();
     </script>
-    <!-- ⭐⭐⭐ نهاية نظام التحديث التلقائي ⭐⭐⭐ -->
 
-    <!-- ⭐⭐⭐ PWA Meta Tags ⭐⭐⭐ -->
     <meta name="theme-color" content="#0a1120">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -57,7 +47,6 @@
     <meta name="description" content="نظام محاسبة متكامل للمبيعات والمخزون">
     <link rel="apple-touch-icon" href="icon.png">
 
-    <!-- ⭐⭐⭐ PWA Manifest (يُولَّد ديناميكياً كـ Blob) ⭐⭐⭐ -->
     <script>
         (function generatePWAManifest() {
             try {
@@ -96,7 +85,6 @@
             }
         })();
     </script>
-    <!-- ⭐⭐⭐ نهاية إعداد PWA ⭐⭐⭐ -->
 
     <link rel="icon" type="image/png" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -866,50 +854,12 @@
         </div>
     </div>
 
-    <!-- ⭐⭐⭐ PWA Service Worker Registration - معطّل مؤقتاً لتجنب مشاكل الكاش ⭐⭐⭐ -->
     <script>
         (function registerPWAServiceWorker() {
-            // ⚠️ Service Worker معطّل مؤقتاً لمنع مشاكل الكاش القديم
-            // هذا لا يؤثر على عمل التطبيق إطلاقاً — فقط يمنع الاحتفاظ بالنسخة القديمة
             console.log('ℹ️ Service Worker disabled (cache fix mode)');
             return;
-
-            /* الكود الأصلي (معطّل حالياً - يمكن إعادة تفعيله لاحقاً):
-            if (!('serviceWorker' in navigator)) {
-                console.log('⚠️ Service Worker not supported in this browser');
-                return;
-            }
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=' + Date.now(), { scope: './', updateViaCache: 'none' })
-                    .then((registration) => {
-                        console.log('✅ PWA SW registered:', registration.scope);
-                        setInterval(() => { registration.update(); }, 60000);
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            if (!newWorker) return;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                }
-                            });
-                        });
-                    })
-                    .catch((err) => {
-                        console.warn('⚠️ SW registration failed:', err);
-                    });
-                let refreshing = false;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
-                        refreshing = true;
-                        console.log('🔄 تم تحديث التطبيق — إعادة التحميل...');
-                        window.location.reload();
-                    }
-                });
-            });
-            */
         })();
     </script>
-    <!-- ⭐⭐⭐ نهاية PWA Service Worker ⭐⭐⭐ -->
 
     <script>
         const firebaseConfig = {
@@ -2391,7 +2341,7 @@
         function csvEscape(value) {
             if (value === null || value === undefined) return '';
             const str = String(value);
-            if (str.indexOf(',') !== -1 || str.indexOf('"') !== -1 || str.indexOf('\n') !== -1 || str.indexOf('\r') !== -1) {
+            if (str.indexOf(';') !== -1 || str.indexOf('"') !== -1 || str.indexOf('\n') !== -1 || str.indexOf('\r') !== -1 || str.indexOf('\t') !== -1) {
                 return '"' + str.replace(/"/g, '""') + '"';
             }
             return str;
@@ -2414,6 +2364,8 @@
                 showToast('⚠️ لا توجد بيانات للتصدير', 'warning');
                 return;
             }
+
+            const SEP = ';';
 
             const headers = [
                 'رقم الفاتورة',
@@ -2439,7 +2391,8 @@
             ];
 
             const rows = [];
-            rows.push(headers.map(csvEscape).join(','));
+            rows.push('sep=' + SEP);
+            rows.push(headers.map(csvEscape).join(SEP));
 
             const sortedInvoices = [...state.invoices].sort((a, b) => (b.id || '').localeCompare(a.id || ''));
 
@@ -2489,14 +2442,14 @@
                             discountPercent,
                             invoiceProfit,
                             itemsCount
-                        ].map(csvEscape).join(','));
+                        ].map(csvEscape).join(SEP));
                     });
                 } else {
                     rows.push([
                         invoiceId, invoiceDate, customerName, paymentMethod, saleType, status,
                         '(لا توجد أصناف)', '', '', '', '', '', '', '', '', '',
                         invoiceTotal, discountPercent, invoiceProfit, itemsCount
-                    ].map(csvEscape).join(','));
+                    ].map(csvEscape).join(SEP));
                 }
             });
 
@@ -3186,7 +3139,6 @@
         })();
     </script>
 
-    <!-- ⭐⭐⭐ المساعد الذكي (مستقل تماماً) ⭐⭐⭐ -->
     <script>
     (function () {
         'use strict';
