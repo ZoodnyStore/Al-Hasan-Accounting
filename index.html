@@ -2448,25 +2448,51 @@
         // ═══════════════════════════════════════════════════════════════
         // 📄 تصدير CSV (مع فاصل ; + BOM)
         // ═══════════════════════════════════════════════════════════════
-        function exportSalesCSV() {
-            if (!Array.isArray(state.invoices) || state.invoices.length === 0) {
-                showToast('⚠️ لا توجد بيانات للتصدير', 'warning');
-                return;
+        // كشف الأجهزة: الآيفون/الآيباد/الماك يبقون على الصيغة الأصلية (تعمل بشكل ممتاز)
+        function isAppleDevice() {
+            const ua = navigator.userAgent || '';
+            if (/iPhone|iPad|iPod/i.test(ua)) return true;
+            // iPadOS الحديث يعرّف نفسه كـ Macintosh
+            if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
+            if (/Macintosh|Mac OS X/i.test(ua)) return true;
+            return false;
+        }
+
+        function isAndroidDevice() {
+            return /Android/i.test(navigator.userAgent || '');
+        }
+
+        // تهريب الحقل حسب الفاصل المستخدم (للصيغ الجديدة على ويندوز/أندرويد)
+        function csvEscapeWith(value, sep) {
+            if (value === null || value === undefined) return '';
+            const str = String(value);
+            if (str.indexOf(sep) !== -1 || str.indexOf('"') !== -1 || str.indexOf('\n') !== -1 || str.indexOf('\r') !== -1 || str.indexOf(',') !== -1 || str.indexOf(';') !== -1 || str.indexOf('\t') !== -1) {
+                return '"' + str.replace(/"/g, '""') + '"';
             }
+            return str;
+        }
 
-            const SEP = ';';
-            const rows = buildSalesRows();
+        // يمنع Excel من تحويل الباركود/SKU الطويل إلى صيغة علمية (6.22E+12) أو حذف الأصفار من بدايته
+        function forceTextCell(value) {
+            const s = (value === null || value === undefined) ? '' : String(value);
+            if (/^\d{6,}$/.test(s) || /^0\d+$/.test(s)) return '="' + s + '"';
+            return s;
+        }
 
-            // نضيف سطر sep=; في البداية ليتعرف Excel على الفاصل تلقائياً
-            const csvLines = ['sep=' + SEP];
-            rows.forEach(row => {
-                csvLines.push(row.map(csvEscape).join(SEP));
-            });
+        // UTF-16 LE مع BOM — الصيغة التي يقرؤها Excel على ويندوز بشكل صحيح دائماً
+        function stringToUtf16LEBytesWithBOM(str) {
+            const bytes = new Uint8Array(2 + str.length * 2);
+            bytes[0] = 0xFF;
+            bytes[1] = 0xFE;
+            for (let i = 0; i < str.length; i++) {
+                const c = str.charCodeAt(i);
+                bytes[2 + i * 2] = c & 0xFF;
+                bytes[3 + i * 2] = c >> 8;
+            }
+            return bytes;
+        }
 
-            const csvContent = csvLines.join('\r\n');
-            const bytes = stringToUtf8BytesWithBOM(csvContent);
-            const blob = new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
-
+        function triggerCsvDownload(blob) {
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.href = url;
@@ -2475,7 +2501,61 @@
             link.click();
             document.body.removeChild(link);
             setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
 
+        function exportSalesCSV() {
+            if (!Array.isArray(state.invoices) || state.invoices.length === 0) {
+                showToast('⚠️ لا توجد بيانات للتصدير', 'warning');
+                return;
+            }
+
+            const rows = buildSalesRows();
+
+            // ───────────────────────────────────────────────
+            // 🍎 آيفون / آيباد / ماك: الصيغة الأصلية بدون أي تغيير
+            // ───────────────────────────────────────────────
+            if (isAppleDevice()) {
+                const SEP = ';';
+                const csvLines = ['sep=' + SEP];
+                rows.forEach(row => {
+                    csvLines.push(row.map(csvEscape).join(SEP));
+                });
+                const csvContent = csvLines.join('\r\n');
+                const bytes = stringToUtf8BytesWithBOM(csvContent);
+                const blob = new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
+                triggerCsvDownload(blob);
+                showToast('✅ تم تصدير ملف CSV', 'success');
+                return;
+            }
+
+            // ───────────────────────────────────────────────
+            // 🤖 أندرويد: UTF-8 + BOM + فاصلة ( , ) وبدون سطر sep=
+            //    (Excel/Sheets/WPS على أندرويد تتعرف عليها تلقائياً)
+            // ───────────────────────────────────────────────
+            if (isAndroidDevice()) {
+                const SEP = ',';
+                const csvLines = rows.map((row, rIdx) =>
+                    row.map((cell, cIdx) => csvEscapeWith(rIdx > 0 && (cIdx === 7 || cIdx === 8) ? forceTextCell(cell) : cell, SEP)).join(SEP)
+                );
+                const bytes = stringToUtf8BytesWithBOM(csvLines.join('\r\n'));
+                const blob = new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
+                triggerCsvDownload(blob);
+                showToast('✅ تم تصدير ملف CSV', 'success');
+                return;
+            }
+
+            // ───────────────────────────────────────────────
+            // 🪟 ويندوز / لابتوب: UTF-16 LE + BOM + فاصل Tab
+            //    يفتح في Excel مباشرة بأعمدة صحيحة وعربي سليم
+            //    بغض النظر عن إعدادات اللغة/الفاصل في الجهاز
+            // ───────────────────────────────────────────────
+            const SEP = '\t';
+            const csvLines = rows.map((row, rIdx) =>
+                row.map((cell, cIdx) => csvEscapeWith(rIdx > 0 && (cIdx === 7 || cIdx === 8) ? forceTextCell(cell) : cell, SEP)).join(SEP)
+            );
+            const bytes = stringToUtf16LEBytesWithBOM(csvLines.join('\r\n'));
+            const blob = new Blob([bytes], { type: 'text/csv;charset=utf-16le;' });
+            triggerCsvDownload(blob);
             showToast('✅ تم تصدير ملف CSV', 'success');
         }
 
